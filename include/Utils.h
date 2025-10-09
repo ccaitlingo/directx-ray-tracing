@@ -37,6 +37,8 @@ namespace Utils
 
 	void LoadModel(std::string filepath, Model &model, Material &material);
 
+	void CreateSphere(float radius, Sphere &sphere, Material &material);
+
 	void Validate(HRESULT hr, LPWSTR message);
 
 	TextureInfo LoadTexture(std::string filepath);

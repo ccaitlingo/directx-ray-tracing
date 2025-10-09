@@ -220,6 +220,37 @@ void Create_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, Model &mod
 	resources.indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 }
 
+/**
+* Create the AABB buffer.
+*/
+void Create_AABB_Buffer(D3D12Global &d3d, D3D12Resources &resources, Sphere &sphere)
+{
+	// Create the AABB (1x1x1 centered at the origin)
+    resources.aabbData.MinX = -0.5f;
+    resources.aabbData.MinY = -0.5f;
+    resources.aabbData.MinZ = -0.5f;
+    resources.aabbData.MaxX =  0.5f;
+    resources.aabbData.MaxY =  0.5f;
+    resources.aabbData.MaxZ =  0.5f;
+	
+	// Create the AABB buffer resource
+	D3D12BufferCreateInfo info(sizeof(D3D12_RAYTRACING_AABB), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+	Create_Buffer(d3d, info, &resources.aabbBuffer);
+#if NAME_D3D_RESOURCES
+	resources.aabbBuffer->SetName(L"AABB Buffer");
+#endif
+
+	// Copy the AABB data to the buffer
+	D3D12_RANGE readRange = {};
+	HRESULT hr = resources.aabbBuffer->Map(0, &readRange, reinterpret_cast<void**>(&resources.aabbBufferStart));
+	Utils::Validate(hr, L"Error: failed to map AABB buffer!");
+
+	memcpy(resources.aabbBufferStart, &resources.aabbData, info.size);
+
+	// Note: No buffer view for AABB buffer, because the BLAS build consumes the raw
+	// buffer address and layout difrectly using D3D12_RAYTRACING_GEOMETRY_DESC::AABBs
+}
+
 /*
 * Create a constant buffer.
 */
@@ -358,6 +389,7 @@ void Update_View_CB(D3D12Global &d3d, D3D12Resources &resources)
  */
 void Destroy(D3D12Resources &resources)
 {
+	if (resources.aabbBufferStart) resources.aabbBufferStart = nullptr;
 	if (resources.viewCB) resources.viewCB->Unmap(0, nullptr);
 	if (resources.viewCBStart) resources.viewCBStart = nullptr;
 	if (resources.materialCB) resources.materialCB->Unmap(0, nullptr);
@@ -366,6 +398,7 @@ void Destroy(D3D12Resources &resources)
 	SAFE_RELEASE(resources.DXROutput);
 	SAFE_RELEASE(resources.vertexBuffer);
 	SAFE_RELEASE(resources.indexBuffer);
+	SAFE_RELEASE(resources.aabbBuffer);
 	SAFE_RELEASE(resources.viewCB);
 	SAFE_RELEASE(resources.materialCB);
 	SAFE_RELEASE(resources.rtvHeap);
@@ -774,9 +807,9 @@ namespace DXR
 {
 
 /**
-* Create the bottom level acceleration structure.
+* Create the bottom level acceleration structure out of triangles.
 */
-void Create_Bottom_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, Model &model) 
+void Create_Bottom_Level_AS_Model(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, Model &model) 
 {
 	// Describe the geometry that goes in the bottom acceleration structure(s)
 	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc;
@@ -812,7 +845,7 @@ void Create_Bottom_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &re
 	bufferInfo.alignment = max(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
 	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.BLAS.pScratch);
 #if NAME_D3D_RESOURCES
-	dxr.BLAS.pScratch->SetName(L"DXR BLAS Scratch");
+	dxr.BLAS.pScratch->SetName(L"DXR BLAS Scratch for Model");
 #endif
 
 	// Create the BLAS buffer
@@ -820,7 +853,68 @@ void Create_Bottom_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &re
 	bufferInfo.state = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.BLAS.pResult);
 #if NAME_D3D_RESOURCES
-	dxr.BLAS.pResult->SetName(L"DXR BLAS");
+	dxr.BLAS.pResult->SetName(L"DXR BLAS for Model");
+#endif
+
+	// Describe and build the bottom level acceleration structure
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
+	buildDesc.Inputs = ASInputs;	
+	buildDesc.ScratchAccelerationStructureData = dxr.BLAS.pScratch->GetGPUVirtualAddress();
+	buildDesc.DestAccelerationStructureData = dxr.BLAS.pResult->GetGPUVirtualAddress();
+
+	d3d.cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
+
+	// Wait for the BLAS build to complete
+	D3D12_RESOURCE_BARRIER uavBarrier;
+	uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+	uavBarrier.UAV.pResource = dxr.BLAS.pResult;
+	uavBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	d3d.cmdList->ResourceBarrier(1, &uavBarrier);
+}
+
+/**
+* Create the bottom level acceleration structure out of spheres.
+*/
+void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, Sphere &sphere) 
+{
+	// Describe the geometry that goes in the bottom acceleration structure(s)
+	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc;
+	geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS;
+	geometryDesc.AABBs.AABBCount = 1;
+	geometryDesc.AABBs.AABBs.StartAddress = resources.aabbBuffer->GetGPUVirtualAddress();
+	geometryDesc.AABBs.AABBs.StrideInBytes = D3D12_RAYTRACING_AABB_BYTE_ALIGNMENT; // could be 0, since there's only one AABB in the buffer
+	geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+	
+	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS buildFlags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+
+	// Get the size requirements for the BLAS buffers
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS ASInputs = {};
+	ASInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+	ASInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;	
+	ASInputs.pGeometryDescs = &geometryDesc;
+	ASInputs.NumDescs = 1;
+	ASInputs.Flags = buildFlags;
+
+	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO ASPreBuildInfo = {};
+	d3d.device->GetRaytracingAccelerationStructurePrebuildInfo(&ASInputs, &ASPreBuildInfo);
+
+	ASPreBuildInfo.ScratchDataSizeInBytes = ALIGN(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ASPreBuildInfo.ScratchDataSizeInBytes);
+	ASPreBuildInfo.ResultDataMaxSizeInBytes = ALIGN(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ASPreBuildInfo.ResultDataMaxSizeInBytes);
+
+	// Create the BLAS scratch buffer
+	D3D12BufferCreateInfo bufferInfo(ASPreBuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	bufferInfo.alignment = max(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
+	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.BLAS.pScratch);
+#if NAME_D3D_RESOURCES
+	dxr.BLAS.pScratch->SetName(L"DXR BLAS Scratch for Sphere");
+#endif
+
+	// Create the BLAS buffer
+	bufferInfo.size = ASPreBuildInfo.ResultDataMaxSizeInBytes;
+	bufferInfo.state = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
+	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.BLAS.pResult);
+#if NAME_D3D_RESOURCES
+	dxr.BLAS.pResult->SetName(L"DXR BLAS for Sphere");
 #endif
 
 	// Describe and build the bottom level acceleration structure

@@ -181,7 +181,7 @@ vector<char> ReadFile(const string &filename)
 }
 
 //--------------------------------------------------------------------------------------
-// Model Loading
+// Scene Object Loading (Model & Sphere)
 //--------------------------------------------------------------------------------------
 
 void LoadModel(string filepath, Model &model, Material &material) 
@@ -232,6 +232,13 @@ void LoadModel(string filepath, Model &model, Material &material)
 			model.indices.push_back(uniqueVertices[vertex]);
 		}
 	}
+}
+
+void CreateSphere(float radius, Sphere &sphere, Material &material) 
+{
+	sphere.radius = radius;
+
+	// Load material
 }
 
 //--------------------------------------------------------------------------------------

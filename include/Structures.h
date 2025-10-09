@@ -94,6 +94,11 @@ struct Model
 	std::vector<uint32_t> indices;
 };
 
+struct Sphere
+{
+	float radius;
+};
+
 struct TextureInfo
 {
 	std::vector<UINT8> pixels;
@@ -183,6 +188,10 @@ struct D3D12Resources
 	D3D12_VERTEX_BUFFER_VIEW						vertexBufferView;
 	ID3D12Resource*									indexBuffer = nullptr;
 	D3D12_INDEX_BUFFER_VIEW							indexBufferView;
+	
+	ID3D12Resource*									aabbBuffer = nullptr;
+	D3D12_RAYTRACING_AABB							aabbData;
+	UINT8*											aabbBufferStart = nullptr;
 
 	ID3D12Resource*									viewCB = nullptr;
 	ViewCB											viewCBData;

@@ -53,7 +53,10 @@ public:
 		d3d.vsync = config.vsync;
 
 		// Load a model
-		Utils::LoadModel(config.model, model, material);
+		// Utils::LoadModel(config.model, model, material);
+
+		// Create a sphere
+		Utils::CreateSphere(1.0f, sphere, material);
 
 		// Initialize the shader compiler
 		D3DShaders::Init_Shader_Compiler(shaderCompiler);
@@ -72,12 +75,13 @@ public:
 		D3DResources::Create_BackBuffer_RTV(d3d, resources);
 		D3DResources::Create_Vertex_Buffer(d3d, resources, model);
 		D3DResources::Create_Index_Buffer(d3d, resources, model);
+		D3DResources::Create_AABB_Buffer(d3d, resources, sphere);
 		D3DResources::Create_Texture(d3d, resources, material);
 		D3DResources::Create_View_CB(d3d, resources);
 		D3DResources::Create_Material_CB(d3d, resources, material);
 		
 		// Create DXR specific resources
-		DXR::Create_Bottom_Level_AS(d3d, dxr, resources, model);
+		DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere);
 		DXR::Create_Top_Level_AS(d3d, dxr, resources);
 		DXR::Create_DXR_Output(d3d, resources);
 		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, model);	
@@ -125,6 +129,7 @@ private:
 	HWND window;
 	Model model;
 	Material material;
+	Sphere sphere;
 
 	DXRGlobal dxr = {};
 	D3D12Global d3d = {};
