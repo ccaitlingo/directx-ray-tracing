@@ -27,10 +27,10 @@
 
 #include "Common.hlsl"
 
-// ---[ Closest Hit Shader ]---
+// ---[ Triangle Closest Hit Shader ]---
 
 [shader("closesthit")]
-void ClosestHit(inout HitInfo payload, Attributes attrib)
+void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
 {
 	uint triangleIndex = PrimitiveIndex();
 	float3 barycentrics = float3((1.0f - attrib.uv.x - attrib.uv.y), attrib.uv.x, attrib.uv.y);

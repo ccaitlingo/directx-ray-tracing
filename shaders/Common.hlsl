@@ -32,9 +32,14 @@ struct HitInfo
 	float4 ShadedColorAndHitT;
 };
 
-struct Attributes 
+struct TriangleAttributes 
 {
 	float2 uv;
+};
+
+struct SphereAttributes
+{
+	float3 normal;
 };
 
 // ---[ Constant Buffers ]---

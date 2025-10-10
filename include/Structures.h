@@ -291,16 +291,22 @@ struct HitProgram
 {
 	RtProgram ahs;
 	RtProgram chs;
+	RtProgram is;
 
 	std::wstring exportName;
 	D3D12_HIT_GROUP_DESC desc = {};
 	D3D12_STATE_SUBOBJECT subobject = {};
 
 	HitProgram() {}
-	HitProgram(LPCWSTR name) : exportName(name)
+	HitProgram(LPCWSTR name, bool isProcedural = false) : exportName(name)
 	{
 		desc = {};
 		desc.HitGroupExport = exportName.c_str();
+		if (isProcedural)
+		{
+			desc.Type = D3D12_HIT_GROUP_TYPE_PROCEDURAL_PRIMITIVE;
+		}
+		
 		subobject.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
 		subobject.pDesc = &desc;
 	}
@@ -310,6 +316,7 @@ struct HitProgram
 		desc.HitGroupExport = exportName.c_str();
 		if (anyHit) desc.AnyHitShaderImport = ahs.exportDesc.Name;
 		desc.ClosestHitShaderImport = chs.exportDesc.Name;
+		// TODO: handle intersection shader
 	}
 
 };
@@ -326,6 +333,7 @@ struct DXRGlobal
 	RtProgram										rgs;
 	RtProgram										miss;
 	HitProgram										hit;
+	HitProgram										hitSphere;
 
 	ID3D12StateObject*								rtpso = nullptr;
 	ID3D12StateObjectProperties*					rtpsoInfo = nullptr;

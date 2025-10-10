@@ -246,6 +246,7 @@ void Create_AABB_Buffer(D3D12Global &d3d, D3D12Resources &resources, Sphere &sph
 	Utils::Validate(hr, L"Error: failed to map AABB buffer!");
 
 	memcpy(resources.aabbBufferStart, &resources.aabbData, info.size);
+	resources.aabbBuffer->Unmap(0, nullptr);
 
 	// Note: No buffer view for AABB buffer, because the BLAS build consumes the raw
 	// buffer address and layout difrectly using D3D12_RAYTRACING_GEOMETRY_DESC::AABBs
@@ -941,7 +942,7 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	// Describe the TLAS geometry instance(s)
 	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc = {};
 	instanceDesc.InstanceID = 0;
-	instanceDesc.InstanceContributionToHitGroupIndex = 0;
+	instanceDesc.InstanceContributionToHitGroupIndex = 1;
 	instanceDesc.InstanceMask = 0xFF;
 	instanceDesc.Transform[0][0] = instanceDesc.Transform[1][1] = instanceDesc.Transform[2][2] = 1;
 	instanceDesc.AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
@@ -1087,15 +1088,31 @@ void Create_Closest_Hit_Program(D3D12Global &d3d, DXRGlobal &dxr, D3D12ShaderCom
 }
 
 /**
+* Load and create the DXR Sphere CHS/Intersection program and root signature.
+*/
+void Create_Sphere_Hit_Program(D3D12Global &d3d, DXRGlobal &dxr, D3D12ShaderCompilerInfo &shaderCompiler)
+{
+	// Load and compile the Sphere Closest Hit shader
+	dxr.hitSphere = HitProgram(L"HitSphere", true);
+	dxr.hitSphere.chs = RtProgram(D3D12ShaderInfo(L"shaders\\ClosestHitSphere.hlsl", L"", L"lib_6_3"));
+	D3DShaders::Compile_Shader(shaderCompiler, dxr.hitSphere.chs);
+	dxr.hitSphere.is = RtProgram(D3D12ShaderInfo(L"shaders\\IntersectionSphere.hlsl", L"", L"lib_6_3"));
+	D3DShaders::Compile_Shader(shaderCompiler, dxr.hitSphere.is);
+}
+
+/**
 * Create the DXR pipeline state object.
 */
 void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 {
-	// Need 10 subobjects:
+	// Need 13 subobjects:
 	// 1 for RGS program
 	// 1 for Miss program
 	// 1 for CHS program
+	// 1 for Sphere CHS program
+	// 1 for Sphere Intersection program
 	// 1 for Hit Group
+	// 1 for Sphere Hit Group
 	// 2 for RayGen Root Signature (root-signature and association)
 	// 2 for Shader Config (config and association)
 	// 1 for Global Root Signature
@@ -1158,6 +1175,42 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 
 	subobjects[index++] = chs;
 
+	// Add state subobject for the Sphere Closest Hit shader
+	// D3D12_EXPORT_DESC chsSphereExportDesc = {};
+	// chsSphereExportDesc.Name = L"ClosestHitSphere_0";
+	// chsSphereExportDesc.ExportToRename = L"ClosestHitSphere";
+	// chsSphereExportDesc.Flags = D3D12_EXPORT_FLAG_NONE;
+
+	// D3D12_DXIL_LIBRARY_DESC	chsSphereLibDesc = {};
+	// chsSphereLibDesc.DXILLibrary.BytecodeLength = dxr.hitSphere.chs.blob->GetBufferSize();
+	// chsSphereLibDesc.DXILLibrary.pShaderBytecode = dxr.hitSphere.chs.blob->GetBufferPointer();
+	// chsSphereLibDesc.NumExports = 1;
+	// chsSphereLibDesc.pExports = &chsSphereExportDesc;
+
+	// D3D12_STATE_SUBOBJECT chsSphere = {};
+	// chsSphere.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+	// chsSphere.pDesc = &chsSphereLibDesc;
+
+	// subobjects[index++] = chsSphere;
+
+	// Add state subobject for the Sphere Intersection shader
+	// D3D12_EXPORT_DESC isSphereExportDesc = {};
+	// isSphereExportDesc.Name = L"IntersectionSphere_0";
+	// isSphereExportDesc.ExportToRename = L"IntersectionSphere";
+	// isSphereExportDesc.Flags = D3D12_EXPORT_FLAG_NONE;
+
+	// D3D12_DXIL_LIBRARY_DESC	isSphereLibDesc = {};
+	// isSphereLibDesc.DXILLibrary.BytecodeLength = dxr.hitSphere.is.blob->GetBufferSize();
+	// isSphereLibDesc.DXILLibrary.pShaderBytecode = dxr.hitSphere.is.blob->GetBufferPointer();
+	// isSphereLibDesc.NumExports = 1;
+	// isSphereLibDesc.pExports = &isSphereExportDesc;
+
+	// D3D12_STATE_SUBOBJECT isSphere = {};
+	// isSphere.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+	// isSphere.pDesc = &isSphereLibDesc;
+
+	// subobjects[index++] = isSphere;
+
 	// Add a state subobject for the hit group
 	D3D12_HIT_GROUP_DESC hitGroupDesc = {};
 	hitGroupDesc.ClosestHitShaderImport = L"ClosestHit_76";
@@ -1168,6 +1221,19 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 	hitGroup.pDesc = &hitGroupDesc;
 
 	subobjects[index++] = hitGroup;
+
+	// Add a state subobject for the Sphere hit group
+	// D3D12_HIT_GROUP_DESC hitGroupDescSphere = {};
+	// hitGroupDescSphere.ClosestHitShaderImport = L"ClosestHitSphere_0";
+	// hitGroupDescSphere.IntersectionShaderImport = L"IntersectionSphere_0";
+	// hitGroupDescSphere.HitGroupExport = L"HitGroupSphere";
+	// hitGroupDescSphere.Type = D3D12_HIT_GROUP_TYPE_PROCEDURAL_PRIMITIVE;
+
+	// D3D12_STATE_SUBOBJECT hitGroupSphere = {};
+	// hitGroupSphere.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+	// hitGroupSphere.pDesc = &hitGroupDescSphere;
+
+	// subobjects[index++] = hitGroupSphere;
 
 	// Add a state subobject for the shader payload configuration
 	D3D12_RAYTRACING_SHADER_CONFIG shaderDesc = {};
@@ -1181,6 +1247,7 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 	subobjects[index++] = shaderConfigObject;
 
 	// Create a list of the shader export names that use the payload
+	// const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup", L"HitGroupSphere" };
 	const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup" };
 
 	// Add a state subobject for the association between shaders and the payload
@@ -1203,6 +1270,7 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 	subobjects[index++] = rayGenRootSigObject;
 
 	// Create a list of the shader export names that use the root signature
+	// const WCHAR* rootSigExports[] = { L"RayGen_12", L"HitGroup", L"HitGroupSphere", L"Miss_5" };
 	const WCHAR* rootSigExports[] = { L"RayGen_12", L"HitGroup", L"Miss_5" };
 
 	// Add a state subobject for the association between the RayGen shader and the local root signature
@@ -1261,6 +1329,7 @@ void Create_Shader_Table(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 		Entry 0 - Ray Generation shader
 		Entry 1 - Miss shader
 		Entry 2 - Closest Hit shader
+		Entry 3 - Sphere shader
 	All shader records in the Shader Table must have the same size, so shader record size will be based on the largest required entry.
 	The ray generation program requires the largest entry: 
 		32 bytes - D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES 
@@ -1276,7 +1345,7 @@ void Create_Shader_Table(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	dxr.shaderTableRecordSize += 8;							// CBV/SRV/UAV descriptor table
 	dxr.shaderTableRecordSize = ALIGN(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, dxr.shaderTableRecordSize);
 
-	shaderTableSize = (dxr.shaderTableRecordSize * 3);		// 3 shader records in the table
+	shaderTableSize = (dxr.shaderTableRecordSize * 4);		// 4 shader records in the table
 	shaderTableSize = ALIGN(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT, shaderTableSize);
 
 	// Create the shader table buffer
@@ -1304,6 +1373,13 @@ void Create_Shader_Table(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	// Shader Record 2 - Closest Hit program and local root parameter data (descriptor table with constant buffer and IB/VB pointers)
 	pData += dxr.shaderTableRecordSize;
 	memcpy(pData, dxr.rtpsoInfo->GetShaderIdentifier(L"HitGroup"), shaderIdSize);
+
+	// Set the root parameter data. Point to start of descriptor heap.
+	*reinterpret_cast<D3D12_GPU_DESCRIPTOR_HANDLE*>(pData + shaderIdSize) = resources.descriptorHeap->GetGPUDescriptorHandleForHeapStart();
+
+	// Shader Record 3 - Sphere CHS/Intersection programs and local root parameter data (descriptor table with constant buffer and IB/VB pointers)
+	pData += dxr.shaderTableRecordSize;
+	memcpy(pData, dxr.rtpsoInfo->GetShaderIdentifier(L"HitGroupSphere"), shaderIdSize);
 
 	// Set the root parameter data. Point to start of descriptor heap.
 	*reinterpret_cast<D3D12_GPU_DESCRIPTOR_HANDLE*>(pData + shaderIdSize) = resources.descriptorHeap->GetGPUDescriptorHandleForHeapStart();
@@ -1525,6 +1601,8 @@ void Destroy(DXRGlobal &dxr)
 	SAFE_RELEASE(dxr.rgs.pRootSignature);
 	SAFE_RELEASE(dxr.miss.blob);
 	SAFE_RELEASE(dxr.hit.chs.blob);
+	SAFE_RELEASE(dxr.hitSphere.chs.blob);
+	SAFE_RELEASE(dxr.hitSphere.is.blob);
 	SAFE_RELEASE(dxr.rtpso);
 	SAFE_RELEASE(dxr.rtpsoInfo);
 }

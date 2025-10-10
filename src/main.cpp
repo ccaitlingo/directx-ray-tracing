@@ -73,10 +73,10 @@ public:
 		// Create common resources
 		D3DResources::Create_Descriptor_Heaps(d3d, resources);
 		D3DResources::Create_BackBuffer_RTV(d3d, resources);
-		D3DResources::Create_Vertex_Buffer(d3d, resources, model);
-		D3DResources::Create_Index_Buffer(d3d, resources, model);
+		// D3DResources::Create_Vertex_Buffer(d3d, resources, model);
+		// D3DResources::Create_Index_Buffer(d3d, resources, model);
 		D3DResources::Create_AABB_Buffer(d3d, resources, sphere);
-		D3DResources::Create_Texture(d3d, resources, material);
+		// D3DResources::Create_Texture(d3d, resources, material);
 		D3DResources::Create_View_CB(d3d, resources);
 		D3DResources::Create_Material_CB(d3d, resources, material);
 		
@@ -88,6 +88,7 @@ public:
 		DXR::Create_RayGen_Program(d3d, dxr, shaderCompiler);
 		DXR::Create_Miss_Program(d3d, dxr, shaderCompiler);
 		DXR::Create_Closest_Hit_Program(d3d, dxr, shaderCompiler);
+		DXR::Create_Sphere_Hit_Program(d3d, dxr, shaderCompiler);
 		DXR::Create_Pipeline_State_Object(d3d, dxr);
 		DXR::Create_Shader_Table(d3d, dxr, resources);
 

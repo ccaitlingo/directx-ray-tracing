@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch DXR (MSVC)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/IntroToDXR_d.exe",
+            "args": [
+                "-width", "1920",
+                "-height", "1080",
+                "-vsync", "1",
+                "-model", ".\\models\\cinema.obj"
+            ],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "integratedTerminal",
+            "preLaunchTask": "build"
+        }
+    ]
+}
