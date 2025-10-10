@@ -3,8 +3,10 @@
 // ---[ Sphere Intersection Shader ]---
 
 [shader("intersection")]
-void SphereIntersection()
+void IntersectionSphere()
 {
+    float RayTMax = 10000.0f;
+    
     // For now, transformation is identity
     float4x4 worldToObject = {
         1, 0, 0, 0,
@@ -39,13 +41,11 @@ void SphereIntersection()
         float t0 = (-b - sqrtDisc) / (2.0f * a);
         float t1 = (-b + sqrtDisc) / (2.0f * a);
 
-        // Find nearest positive hit within [RayTMin(), RayTMax()]
-        float tHit = t0;
-        if (tHit < RayTMin())
-        {
-            tHit = t1;
-        }
-        else
+        // Find the valid hit distance (t0 or t1)
+        float tHit = (t0 >= RayTMin() && t0 <= RayTMax) ? t0 :
+                     (t1 >= RayTMin() && t1 <= RayTMax) ? t1 : -1.0f;
+
+        if (tHit >= 0.0f)
         {
             // Object-space hit point and normal
             float3 hitOS = rayOriginOS + tHit * rayDirOS;

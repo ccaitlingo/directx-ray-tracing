@@ -226,12 +226,12 @@ void Create_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, Model &mod
 void Create_AABB_Buffer(D3D12Global &d3d, D3D12Resources &resources, Sphere &sphere)
 {
 	// Create the AABB (1x1x1 centered at the origin)
-    resources.aabbData.MinX = -0.5f;
-    resources.aabbData.MinY = -0.5f;
-    resources.aabbData.MinZ = -0.5f;
-    resources.aabbData.MaxX =  0.5f;
-    resources.aabbData.MaxY =  0.5f;
-    resources.aabbData.MaxZ =  0.5f;
+    resources.aabbData.MinX = -1.0f;
+    resources.aabbData.MinY = -1.0f;
+    resources.aabbData.MinZ = -1.0f;
+    resources.aabbData.MaxX =  1.0f;
+    resources.aabbData.MaxY =  1.0f;
+    resources.aabbData.MaxZ =  1.0f;
 	
 	// Create the AABB buffer resource
 	D3D12BufferCreateInfo info(sizeof(D3D12_RAYTRACING_AABB), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
@@ -1108,18 +1108,18 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 	// Need 13 subobjects:
 	// 1 for RGS program
 	// 1 for Miss program
-	// 1 for CHS program
-	// 1 for Sphere CHS program
+	// 1 for CHS program( )
+	// 1 for Sphere CHS program(*)
 	// 1 for Sphere Intersection program
-	// 1 for Hit Group
-	// 1 for Sphere Hit Group
+	// 1 for Hit Group( )
+	// 1 for Sphere Hit Group(*)
 	// 2 for RayGen Root Signature (root-signature and association)
 	// 2 for Shader Config (config and association)
 	// 1 for Global Root Signature
 	// 1 for Pipeline Config	
 	UINT index = 0;
 	vector<D3D12_STATE_SUBOBJECT> subobjects;
-	subobjects.resize(10);
+	subobjects.resize(13);
 	
 	// Add state subobject for the RGS
 	D3D12_EXPORT_DESC rgsExportDesc = {};
@@ -1176,40 +1176,40 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 	subobjects[index++] = chs;
 
 	// Add state subobject for the Sphere Closest Hit shader
-	// D3D12_EXPORT_DESC chsSphereExportDesc = {};
-	// chsSphereExportDesc.Name = L"ClosestHitSphere_0";
-	// chsSphereExportDesc.ExportToRename = L"ClosestHitSphere";
-	// chsSphereExportDesc.Flags = D3D12_EXPORT_FLAG_NONE;
+  	D3D12_EXPORT_DESC chsSphereExportDesc = {};
+	chsSphereExportDesc.Name = L"ClosestHitSphere_0";
+	chsSphereExportDesc.ExportToRename = L"ClosestHitSphere";
+	chsSphereExportDesc.Flags = D3D12_EXPORT_FLAG_NONE;
 
-	// D3D12_DXIL_LIBRARY_DESC	chsSphereLibDesc = {};
-	// chsSphereLibDesc.DXILLibrary.BytecodeLength = dxr.hitSphere.chs.blob->GetBufferSize();
-	// chsSphereLibDesc.DXILLibrary.pShaderBytecode = dxr.hitSphere.chs.blob->GetBufferPointer();
-	// chsSphereLibDesc.NumExports = 1;
-	// chsSphereLibDesc.pExports = &chsSphereExportDesc;
+	D3D12_DXIL_LIBRARY_DESC	chsSphereLibDesc = {};
+	chsSphereLibDesc.DXILLibrary.BytecodeLength = dxr.hitSphere.chs.blob->GetBufferSize();
+	chsSphereLibDesc.DXILLibrary.pShaderBytecode = dxr.hitSphere.chs.blob->GetBufferPointer();
+	chsSphereLibDesc.NumExports = 1;
+	chsSphereLibDesc.pExports = &chsSphereExportDesc;
 
-	// D3D12_STATE_SUBOBJECT chsSphere = {};
-	// chsSphere.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
-	// chsSphere.pDesc = &chsSphereLibDesc;
+	D3D12_STATE_SUBOBJECT chsSphere = {};
+	chsSphere.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+	chsSphere.pDesc = &chsSphereLibDesc;
 
-	// subobjects[index++] = chsSphere;
+	subobjects[index++] = chsSphere;
 
 	// Add state subobject for the Sphere Intersection shader
-	// D3D12_EXPORT_DESC isSphereExportDesc = {};
-	// isSphereExportDesc.Name = L"IntersectionSphere_0";
-	// isSphereExportDesc.ExportToRename = L"IntersectionSphere";
-	// isSphereExportDesc.Flags = D3D12_EXPORT_FLAG_NONE;
+	D3D12_EXPORT_DESC isSphereExportDesc = {};
+	isSphereExportDesc.Name = L"IntersectionSphere_0";
+	isSphereExportDesc.ExportToRename = L"IntersectionSphere";
+	isSphereExportDesc.Flags = D3D12_EXPORT_FLAG_NONE;
 
-	// D3D12_DXIL_LIBRARY_DESC	isSphereLibDesc = {};
-	// isSphereLibDesc.DXILLibrary.BytecodeLength = dxr.hitSphere.is.blob->GetBufferSize();
-	// isSphereLibDesc.DXILLibrary.pShaderBytecode = dxr.hitSphere.is.blob->GetBufferPointer();
-	// isSphereLibDesc.NumExports = 1;
-	// isSphereLibDesc.pExports = &isSphereExportDesc;
+	D3D12_DXIL_LIBRARY_DESC	isSphereLibDesc = {};
+	isSphereLibDesc.DXILLibrary.BytecodeLength = dxr.hitSphere.is.blob->GetBufferSize();
+	isSphereLibDesc.DXILLibrary.pShaderBytecode = dxr.hitSphere.is.blob->GetBufferPointer();
+	isSphereLibDesc.NumExports = 1;
+	isSphereLibDesc.pExports = &isSphereExportDesc;
 
-	// D3D12_STATE_SUBOBJECT isSphere = {};
-	// isSphere.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
-	// isSphere.pDesc = &isSphereLibDesc;
+	D3D12_STATE_SUBOBJECT isSphere = {};
+	isSphere.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+	isSphere.pDesc = &isSphereLibDesc;
 
-	// subobjects[index++] = isSphere;
+	subobjects[index++] = isSphere;
 
 	// Add a state subobject for the hit group
 	D3D12_HIT_GROUP_DESC hitGroupDesc = {};
@@ -1223,17 +1223,17 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 	subobjects[index++] = hitGroup;
 
 	// Add a state subobject for the Sphere hit group
-	// D3D12_HIT_GROUP_DESC hitGroupDescSphere = {};
-	// hitGroupDescSphere.ClosestHitShaderImport = L"ClosestHitSphere_0";
-	// hitGroupDescSphere.IntersectionShaderImport = L"IntersectionSphere_0";
-	// hitGroupDescSphere.HitGroupExport = L"HitGroupSphere";
-	// hitGroupDescSphere.Type = D3D12_HIT_GROUP_TYPE_PROCEDURAL_PRIMITIVE;
+	D3D12_HIT_GROUP_DESC hitGroupDescSphere = {};
+	hitGroupDescSphere.ClosestHitShaderImport = L"ClosestHitSphere_0";
+	hitGroupDescSphere.IntersectionShaderImport = L"IntersectionSphere_0";
+	hitGroupDescSphere.HitGroupExport = L"HitGroupSphere";
+	hitGroupDescSphere.Type = D3D12_HIT_GROUP_TYPE_PROCEDURAL_PRIMITIVE;
 
-	// D3D12_STATE_SUBOBJECT hitGroupSphere = {};
-	// hitGroupSphere.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
-	// hitGroupSphere.pDesc = &hitGroupDescSphere;
+	D3D12_STATE_SUBOBJECT hitGroupSphere = {};
+	hitGroupSphere.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+	hitGroupSphere.pDesc = &hitGroupDescSphere;
 
-	// subobjects[index++] = hitGroupSphere;
+	subobjects[index++] = hitGroupSphere;
 
 	// Add a state subobject for the shader payload configuration
 	D3D12_RAYTRACING_SHADER_CONFIG shaderDesc = {};
@@ -1247,8 +1247,9 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 	subobjects[index++] = shaderConfigObject;
 
 	// Create a list of the shader export names that use the payload
-	// const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup", L"HitGroupSphere" };
-	const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup" };
+	const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup", L"HitGroupSphere" };
+	// const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup" };
+	// const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroupSphere" };
 
 	// Add a state subobject for the association between shaders and the payload
 	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION shaderPayloadAssociation = {};
@@ -1270,8 +1271,9 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 	subobjects[index++] = rayGenRootSigObject;
 
 	// Create a list of the shader export names that use the root signature
-	// const WCHAR* rootSigExports[] = { L"RayGen_12", L"HitGroup", L"HitGroupSphere", L"Miss_5" };
-	const WCHAR* rootSigExports[] = { L"RayGen_12", L"HitGroup", L"Miss_5" };
+	const WCHAR* rootSigExports[] = { L"RayGen_12", L"HitGroup", L"HitGroupSphere", L"Miss_5" };
+	// const WCHAR* rootSigExports[] = { L"RayGen_12", L"HitGroup", L"Miss_5" };
+	// const WCHAR* rootSigExports[] = { L"RayGen_12", L"HitGroupSphere", L"Miss_5" };
 
 	// Add a state subobject for the association between the RayGen shader and the local root signature
 	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION rayGenShaderRootSigAssociation = {};

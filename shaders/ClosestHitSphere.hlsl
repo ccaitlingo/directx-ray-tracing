@@ -3,7 +3,7 @@
 // ---[ Sphere Closest Hit Shader ]---
 
 [shader("closesthit")]
-void ClosestHit(inout HitInfo payload, SphereAttributes attrib)
+void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
 {
     // Simple diffuse shading
     float3 normal = normalize(attrib.normal);
