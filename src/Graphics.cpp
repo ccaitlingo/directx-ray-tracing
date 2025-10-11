@@ -315,6 +315,11 @@ void Create_Material_CB(D3D12Global &d3d, D3D12Resources &resources, const Mater
 #endif
 
 	resources.materialCBData.resolution = XMFLOAT4(material.textureResolution, 0.f, 0.f, 0.f);
+	resources.materialCBData.ambient = XMFLOAT4(material.ambient[0], material.ambient[1], material.ambient[2], 0.0f);
+	resources.materialCBData.diffuse = XMFLOAT4(material.diffuse[0], material.diffuse[1], material.diffuse[2], 0.0f);
+	resources.materialCBData.dissolve = material.dissolve;
+	resources.materialCBData.shininess = material.shininess;
+	resources.materialCBData.illum = XMFLOAT2((float)material.illum, 0.f);
 
 	HRESULT hr = resources.materialCB->Map(0, nullptr, reinterpret_cast<void**>(&resources.materialCBStart));
 	Utils::Validate(hr, L"Error: failed to map Material constant buffer!");

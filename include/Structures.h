@@ -86,6 +86,11 @@ struct Material
 	std::string name = "defaultMaterial";
 	std::string texturePath = "";
 	float  textureResolution = 512;
+	float ambient[3];
+	float diffuse[3];
+	float dissolve;
+	float shininess;
+	int illum;
 };
 
 struct Model
@@ -108,9 +113,15 @@ struct TextureInfo
 	int offset = 0;
 };
 
-struct MaterialCB 
+struct MaterialCB
 {
+	// Later this will become an array
 	DirectX::XMFLOAT4 resolution;
+	DirectX::XMFLOAT4 ambient;
+	DirectX::XMFLOAT4 diffuse;
+	float dissolve;
+	float shininess;
+	DirectX::XMFLOAT2 illum;
 };
 
 struct ViewCB

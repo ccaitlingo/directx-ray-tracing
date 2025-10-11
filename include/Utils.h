@@ -37,7 +37,7 @@ namespace Utils
 
 	void LoadModel(std::string filepath, Model &model, Material &material);
 
-	void CreateSphere(float radius, Sphere &sphere, Material &material);
+	void CreateSphere(float radius, Sphere &sphere, std::string filepath, Material &material);
 
 	void Validate(HRESULT hr, LPWSTR message);
 

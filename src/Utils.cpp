@@ -234,11 +234,36 @@ void LoadModel(string filepath, Model &model, Material &material)
 	}
 }
 
-void CreateSphere(float radius, Sphere &sphere, Material &material) 
+void CreateSphere(float radius, Sphere &sphere, string filepath, Material &material) 
 {
-	sphere.radius = radius;
+	std::vector<tinyobj::material_t> materials;
+    std::map<std::string, int> matMap;
+    std::string warn;
+    std::string err;
 
-	// Load material
+	// Load the OBJ and MTL files
+	std::string mtl_basedir = "materials\\";
+    tinyobj::MaterialFileReader matreader(mtl_basedir);
+	if (!matreader(filepath, &materials, &matMap, &err))
+	{
+		throw std::runtime_error(err);
+	}
+
+	// Get the first material
+	// Only support a single material right now
+	material.name = materials[0].name;
+	material.texturePath = materials[0].diffuse_texname;
+	material.dissolve = materials[0].dissolve;
+	material.shininess = materials[0].shininess;
+	material.illum = materials[0].illum;
+	for (int i = 0; i < 3; i++)
+	{
+		material.ambient[i] = materials[0].ambient[i];
+		material.diffuse[i] = materials[0].diffuse[i];
+	}
+
+	// Load the radius
+	sphere.radius = radius;
 }
 
 //--------------------------------------------------------------------------------------

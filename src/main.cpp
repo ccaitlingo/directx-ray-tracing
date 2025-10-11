@@ -56,7 +56,7 @@ public:
 		// Utils::LoadModel(config.model, model, material);
 
 		// Create a sphere
-		Utils::CreateSphere(1.0f, sphere, material);
+		Utils::CreateSphere(1.0f, sphere, "red.mtl", material);
 
 		// Initialize the shader compiler
 		D3DShaders::Init_Shader_Compiler(shaderCompiler);

@@ -54,6 +54,11 @@ cbuffer ViewCB : register(b0)
 cbuffer MaterialCB : register(b1)
 {
 	float4 textureResolution;
+	float4 ambient;
+	float4 diffuse;
+	float dissolve;
+	float shininess;
+	float2 illum;	// should be an int, but we need 8 bytes for padding
 };
 
 // ---[ Resources ]---
