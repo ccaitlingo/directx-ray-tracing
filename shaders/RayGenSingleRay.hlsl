@@ -27,18 +27,37 @@
 
 #include "Common.hlsl"
 
-// ---[ Triangle Closest Hit Shader ]---
+// ---[ Old Ray Generation Shader ]---
 
-[shader("closesthit")]
-void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
+[shader("raygeneration")]
+void RayGenOld()
 {
-	uint triangleIndex = PrimitiveIndex();
-	float3 barycentrics = float3((1.0f - attrib.uv.x - attrib.uv.y), attrib.uv.x, attrib.uv.y);
-	VertexAttributes vertex = GetVertexAttributes(triangleIndex, barycentrics);
+	uint2 LaunchIndex = DispatchRaysIndex().xy;
+	uint2 LaunchDimensions = DispatchRaysDimensions().xy;
 
-	int2 coord = floor(vertex.uv * textureResolution.x);
-	float3 color = albedo.Load(int3(coord, 0)).rgb;
+	float2 d = (((LaunchIndex.xy + 0.5f) / resolution.xy) * 2.f - 1.f);
+	float aspectRatio = (resolution.x / resolution.y);
 
-	payload.ShadedColor = color;
-    payload.HitT = RayTCurrent();
+	// Setup the ray
+	RayDesc ray;
+	ray.Origin = viewOriginAndTanHalfFovY.xyz;
+	ray.Direction = normalize((d.x * view[0].xyz * viewOriginAndTanHalfFovY.w * aspectRatio) - (d.y * view[1].xyz * viewOriginAndTanHalfFovY.w) + view[2].xyz);
+	ray.TMin = 0.1f;
+	ray.TMax = 1000.f;	
+
+	// Trace the ray
+	HitInfo payload;
+	payload.ShadedColorAndHitT = float4(0.f, 0.f, 0.f, 0.f);
+
+	TraceRay(
+		SceneBVH,
+		RAY_FLAG_NONE,
+		0xFF,
+		0,
+		0,
+		0,
+		ray,
+		payload);
+
+	RTOutput[LaunchIndex.xy] = float4(payload.ShadedColorAndHitT.rgb, 1.f);
 }

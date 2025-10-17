@@ -55,7 +55,7 @@ void IntersectionSphere()
             float3 normalWS = normalize(mul((float3x3)transpose(worldToObject), normalOS));
 
             SphereAttributes attrib;
-            attrib.normal = normalWS;
+            attrib.normal = float4(normalWS, 0.f);
 
             // Use a hit kind constant for custom or triangle analogs
             ReportHit(tHit, 0, attrib);

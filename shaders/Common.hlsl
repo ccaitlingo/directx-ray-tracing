@@ -25,11 +25,23 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+// ---[ Constants ]---
+#define MAX_BOUNCES 2
+
 // ---[ Structures ]---
+
+// struct HitInfo
+// {
+// 	float4 ShadedColorAndHitT;
+// };
 
 struct HitInfo
 {
-	float4 ShadedColorAndHitT;
+    float3 ShadedColor;
+	float HitT;
+    float3 throughput;
+	uint depth;
+	float4 normal;
 };
 
 struct TriangleAttributes 
@@ -39,7 +51,7 @@ struct TriangleAttributes
 
 struct SphereAttributes
 {
-	float3 normal;
+	float4 normal;
 };
 
 // ---[ Constant Buffers ]---
@@ -101,4 +113,38 @@ VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics)
 	}
 
 	return v;
+}
+
+// Generate a random float in [0,1) per thread. Later, replace with preferred randomness generator
+float RandomFloat(uint2 pixelCoords, uint bounce, uint seed)
+{
+    // Simple hash-based hash random number generator
+    uint hash = pixelCoords.x + pixelCoords.y * 73856093u + bounce * 19349663u + seed * 83492791u;
+    hash ^= hash << 13;
+    hash ^= hash >> 17;
+    hash ^= hash << 5;
+    return (float)(hash & 0x00FFFFFF) / 16777216.0f;
+}
+
+// Create an orthonormal basis (Tangent, Bitangent) from a given normal
+void CreateCoordinateSystem(float3 N, out float3 T, out float3 B)
+{
+    if (abs(N.x) > abs(N.z))
+    {
+        T = normalize(float3(-N.y, N.x, 0));
+    }
+    else
+    {
+        T = normalize(float3(0, -N.z, N.y));
+    }
+    B = cross(N, T);
+}
+
+// Cosine-weighted hemisphere sampling function
+float3 SampleCosineWeightedHemisphere(float2 xi)
+{
+    float phi = 2.0f * 3.14159265359f * xi.x;
+    float cosTheta = sqrt(1.0f - xi.y);
+    float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+    return float3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
