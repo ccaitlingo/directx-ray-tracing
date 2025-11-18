@@ -945,13 +945,24 @@ void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resour
 void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources) 
 {
 	// Describe the TLAS geometry instance(s)
-	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc = {};
-	instanceDesc.InstanceID = 0;
-	instanceDesc.InstanceContributionToHitGroupIndex = 1;
-	instanceDesc.InstanceMask = 0xFF;
-	instanceDesc.Transform[0][0] = instanceDesc.Transform[1][1] = instanceDesc.Transform[2][2] = 1;
-	instanceDesc.AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
-	instanceDesc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc[2] = {};
+
+	// Instance 0
+	instanceDesc[0].InstanceID = 0;
+	instanceDesc[0].InstanceContributionToHitGroupIndex = 1;
+	instanceDesc[0].InstanceMask = 0xFF;
+	instanceDesc[0].Transform[0][0] = instanceDesc[0].Transform[1][1] = instanceDesc[0].Transform[2][2] = 1;
+	instanceDesc[0].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
+	instanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+
+	// Instance 1
+	instanceDesc[1].InstanceID = 1;
+	instanceDesc[1].InstanceContributionToHitGroupIndex = 1;
+	instanceDesc[1].InstanceMask = 0xFF;
+	instanceDesc[0].Transform[0][0] = instanceDesc[0].Transform[1][1] = instanceDesc[0].Transform[2][2] = 1;
+	instanceDesc[0].Transform[2][3] = -1; // move position down
+	instanceDesc[1].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
+	instanceDesc[1].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
 
 	// Create the TLAS instance buffer
 	D3D12BufferCreateInfo instanceBufferInfo;

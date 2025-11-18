@@ -58,6 +58,39 @@ public:
 		// Create a sphere
 		Utils::CreateSphere(1.0f, sphere, "red.mtl", material);
 
+		// Create instances of the sphere
+		Instance sphere_a = 
+		{
+			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
+			{
+				{1.0f, 0.0f, 0.0f, 0.0f},
+				{0.0f, 1.0f, 0.0f, 0.0f},
+				{0.0f, 0.0f, 1.0f, -1.0f}
+			},
+			0,
+			0
+		};
+		Instance sphere_b = 
+		{
+			DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),
+			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
+			{
+				{1.0f, 0.0f, 0.0f, 0.0f},
+				{0.0f, 1.0f, 0.0f, 0.0f},
+				{0.0f, 0.0f, 1.0f, 0.0f}
+			},
+			0,
+			0
+		};
+
+		// Add to instance list
+		std::vector<Instance> world_objs;
+		world_objs.push_back(sphere_a);
+		world_objs.push_back(sphere_b);
+
 		// Initialize the shader compiler
 		D3DShaders::Init_Shader_Compiler(shaderCompiler);
 

@@ -58,6 +58,17 @@ struct ConfigInfo
 	HINSTANCE		instance = NULL;
 };
 
+struct Instance
+{
+	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT3 scale;
+	DirectX::XMFLOAT4 rotation;
+	FLOAT transform3x4[3][4];
+	UINT InstanceID : 24;
+	UINT hitGroupIndex : 3;
+	// which BLAS
+};
+
 struct Vertex
 {
 	DirectX::XMFLOAT3 position;
