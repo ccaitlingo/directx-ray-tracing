@@ -959,10 +959,14 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	instanceDesc[1].InstanceID = 1;
 	instanceDesc[1].InstanceContributionToHitGroupIndex = 1;
 	instanceDesc[1].InstanceMask = 0xFF;
-	instanceDesc[0].Transform[0][0] = instanceDesc[0].Transform[1][1] = instanceDesc[0].Transform[2][2] = 1;
-	instanceDesc[0].Transform[2][3] = -1; // move position down
+	instanceDesc[1].Transform[0][0] = instanceDesc[1].Transform[1][1] = instanceDesc[1].Transform[2][2] = 1;
+	instanceDesc[1].Transform[0][0] = 30;  // Fat in X
+	instanceDesc[1].Transform[1][1] = 30;  // Fat in Y
+	instanceDesc[1].Transform[2][2] = 30;  // Fat in Z
+	instanceDesc[1].Transform[1][3] = -31; // Move down by 31 units in Y (vertical direction)
 	instanceDesc[1].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
 	instanceDesc[1].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+
 
 	// Create the TLAS instance buffer
 	D3D12BufferCreateInfo instanceBufferInfo;
@@ -988,7 +992,7 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	ASInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 	ASInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
 	ASInputs.InstanceDescs = dxr.TLAS.pInstanceDesc->GetGPUVirtualAddress();
-	ASInputs.NumDescs = 1;
+	ASInputs.NumDescs = 2;
 	ASInputs.Flags = buildFlags;
 
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO ASPreBuildInfo = {};

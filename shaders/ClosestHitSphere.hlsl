@@ -5,18 +5,13 @@
 [shader("closesthit")]
 void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
 {
-    // Simple diffuse shading
-    // float3 normal = normalize(attrib.normal);
-    // float3 lightDir = normalize(float3(1.0f, 1.0f, 1.0f));
-    // float intensity = max(0.0f, dot(normal, lightDir));
-    // float3 color = intensity * float3(1.0f, 0.7f, 0.3f); // Orange diffuse
+    float3 normalWS = normalize(attrib.normal.xyz);
 
-    float3 color = float3(0.7f, 0.2f, 0.2f); // Solid red
+    // Pure grey sphere color
+    float3 color = float3(0.3f, 0.3f, 0.3f);
 
-    // Log the normal in the payload for next ray generation
-    payload.normal = attrib.normal;
-
-    // Store final color and hit distance
+    // Write result to the payload
     payload.ShadedColor = color;
     payload.HitT = RayTCurrent();
+    payload.normal = attrib.normal;
 }

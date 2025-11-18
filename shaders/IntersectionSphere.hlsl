@@ -10,16 +10,20 @@ void IntersectionSphere()
     
     // World-space to Object-space transform
     float4x4 worldToObject;
-    if (id == 0)
-    {
-        // Sphere 0
-        worldToObject[0][0] = worldToObject[1][1] = worldToObject[2][2] = 1;
-    }
-    else
+
+    // Identity
+    worldToObject[0][0] = 1; worldToObject[0][1] = 0; worldToObject[0][2] = 0; worldToObject[0][3] = 0;
+    worldToObject[1][0] = 0; worldToObject[1][1] = 1; worldToObject[1][2] = 0; worldToObject[1][3] = 0;
+    worldToObject[2][0] = 0; worldToObject[2][1] = 0; worldToObject[2][2] = 1; worldToObject[2][3] = 0;
+    worldToObject[3][0] = 0; worldToObject[3][1] = 0; worldToObject[3][2] = 0; worldToObject[3][3] = 1;
+        
+    if (id == 1)
     {
         // Sphere 1
-        worldToObject[0][0] = worldToObject[1][1] = worldToObject[2][2] = 1;
-        worldToObject[2][3] = -1;
+        worldToObject[0][0] = 0.033; // Fat in X
+        worldToObject[1][1] = 0.033; // Fat in Y
+        worldToObject[2][2] = 0.033; // Fat in Z
+        worldToObject[1][3] = 31.0/30.0; // Move down in the Y direction (units translated / scale)
     }
     
     // Get world-space ray origin and direction
@@ -33,15 +37,7 @@ void IntersectionSphere()
     float3 rayDirOS    = normalize(rayDirOS4.xyz); // Direction may be scaled by matrix; normalize it
 
     // Position (object space)
-    float3 sphereCenterOS;
-    if (id == 0)
-    {
-        sphereCenterOS = float3(0.0f, 0.0f, 0.0f);
-    }
-    else
-    {
-        sphereCenterOS = float3(0.0f, 0.0f, -1.0f);
-    }
+    float3 sphereCenterOS = float3(0.0f, 0.0f, 0.0f);
 
     // Unit sphere
     float radius = 1.0f;

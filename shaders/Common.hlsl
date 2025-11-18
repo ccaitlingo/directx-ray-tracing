@@ -26,7 +26,7 @@
  */
 
 // ---[ Constants ]---
-#define MAX_BOUNCES 2
+#define MAX_BOUNCES 10
 
 // ---[ Structures ]---
 
