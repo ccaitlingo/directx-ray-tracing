@@ -967,7 +967,6 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	instanceDesc[1].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
 	instanceDesc[1].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
 
-
 	// Create the TLAS instance buffer
 	D3D12BufferCreateInfo instanceBufferInfo;
 	instanceBufferInfo.size = sizeof(instanceDesc);
@@ -1315,7 +1314,7 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 
 	// Add a state subobject for the ray tracing pipeline config
 	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
-	pipelineConfig.MaxTraceRecursionDepth = 1;
+	pipelineConfig.MaxTraceRecursionDepth = 2;
 
 	D3D12_STATE_SUBOBJECT pipelineConfigObject = {};
 	pipelineConfigObject.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;

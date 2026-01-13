@@ -1,64 +1,116 @@
+/* Copyright (c) 2018-2019, NVIDIA CORPORATION. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *  * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *  * Neither the name of NVIDIA CORPORATION nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include "Common.hlsl"
 
-// ---[ Sphere Intersection Shader ]---
+// ---[ Ray Generation Shader ]---
 
-[shader("intersection")]
-void IntersectionSphere()
+[shader("raygeneration")]
+void RayGen()
 {
-    float RayTMax = 10000.0f;
-    
-    // For now, transformation is identity
-    float4x4 worldToObject = {
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    };
-    
-    // Get world-space ray origin and direction
-    float3 rayOriginWS = WorldRayOrigin();
-    float3 rayDirWS = WorldRayDirection();
+	uint2 LaunchIndex = DispatchRaysIndex().xy;
+	uint2 LaunchDimensions = DispatchRaysDimensions().xy;
 
-    // Transform ray to object space
-    float4 rayOriginOS4 = mul(worldToObject, float4(rayOriginWS, 1.0f));
-    float4 rayDirOS4   = mul(worldToObject, float4(rayDirWS, 0.0f));
-    float3 rayOriginOS = rayOriginOS4.xyz / rayOriginOS4.w;
-    float3 rayDirOS    = normalize(rayDirOS4.xyz); // Direction may be scaled by matrix; normalize it
+	float2 d = (((LaunchIndex.xy + 0.5f) / resolution.xy) * 2.f - 1.f);
+	float aspectRatio = (resolution.x / resolution.y);
 
-    // For now, unit sphere at origin (object space)
-    float3 sphereCenterOS = float3(0.0f, 0.0f, 0.0f);
-    float radius = 1.0f;
+	// Setup the ray
+	RayDesc ray;
+	ray.Origin = viewOriginAndTanHalfFovY.xyz;
+	ray.Direction = normalize((d.x * view[0].xyz * viewOriginAndTanHalfFovY.w * aspectRatio) - (d.y * view[1].xyz * viewOriginAndTanHalfFovY.w) + view[2].xyz);
+	ray.TMin = 0.05f; // originally 0.1f
+	ray.TMax = 1000.f;	
 
-    float3 oc = rayOriginOS - sphereCenterOS;
-    float a = dot(rayDirOS, rayDirOS);
-    float b = 2.0f * dot(oc, rayDirOS);
-    float c = dot(oc, oc) - radius * radius;
-    float discriminant = b * b - 4.0f * a * c;
+	// Initialize the payload
+	HitInfo payload;
+	payload.ShadedColor = float3(0.f, 0.f, 0.f);
+	payload.HitT = 0.f;
+	payload.throughput = float3(1.0f, 1.0f, 1.0f);
+	payload.depth = 0;
 
-    if (discriminant > 0.0f)
-    {
-        float sqrtDisc = sqrt(discriminant);
-        float t0 = (-b - sqrtDisc) / (2.0f * a);
-        float t1 = (-b + sqrtDisc) / (2.0f * a);
+	// Initialize accumulated color
+	float3 accumulatedColor = float3(0.f, 0.f, 0.f);
 
-        // Find the valid hit distance (t0 or t1)
-        float tHit = (t0 >= RayTMin() && t0 <= RayTMax) ? t0 :
-                     (t1 >= RayTMin() && t1 <= RayTMax) ? t1 : -1.0f;
+	// Trace the ray(s)
+	for (int bounce = 0; bounce < MAX_BOUNCES; ++bounce)
+	{
+		TraceRay(
+			SceneBVH,
+			RAY_FLAG_NONE,
+			0xFF,
+			0,
+			0,
+			0,
+			ray,
+			payload
+		);
 
-        if (tHit >= 0.0f)
-        {
-            // Object-space hit point and normal
-            float3 hitOS = rayOriginOS + tHit * rayDirOS;
-            float3 normalOS = normalize(hitOS);
+		// Accumulate color
+		accumulatedColor += payload.throughput * payload.ShadedColor;
 
-            // Transform the normal to world space (ignore translation, scale by inverse transpose)
-            float3 normalWS = normalize(mul((float3x3)transpose(worldToObject), normalOS));
+		// Check for termination
+		if (bounce == MAX_BOUNCES - 1) // Max bounces
+            break;
 
-            SphereAttributes attrib;
-            attrib.normal = float4(normalWS, 0.f);
+        if (payload.HitT == -1) // Miss
+            break;
 
-            // Use a hit kind constant for custom or triangle analogs
-            ReportHit(tHit, 0, attrib);
-        }
-    }
+        // Calculate hit position from ray origin + direction * t
+        float3 hitPos = ray.Origin + ray.Direction * payload.HitT;
+
+        // Get normal at hit point (you need to provide a method or payload info)
+        // Assume here payload.origin.xyz holds hit position and direction stores normal for demo
+        // Usually normal is returned via a special attribute or intersection shader
+        float3 N = normalize(payload.normal.rgb);
+
+        // Create orthonormal basis
+        float3 T, B;
+        CreateCoordinateSystem(N, T, B);
+
+        // Generate random numbers for hemisphere sampling
+        float rnd1 = RandomFloat(LaunchIndex, bounce, 0);
+        float rnd2 = RandomFloat(LaunchIndex, bounce, 1);
+        float2 xi = float2(rnd1, rnd2);
+
+        // Sample hemisphere direction in tangent space
+        float3 sampleDir = SampleCosineWeightedHemisphere(xi);
+
+        // Transform sampleDir to world space coordinate system
+        float3 newDir = normalize(sampleDir.x * T + sampleDir.y * B + sampleDir.z * N);
+
+        // Update throughput by multiplying by cosine and albedo (assuming albedo == payload.ShadedColor for demo)
+        payload.throughput *= payload.ShadedColor * dot(newDir, N);
+
+        // Setup ray for next bounce
+        ray.Origin = hitPos + newDir * 0.001f; // offset by epsilon to avoid self-intersection
+        ray.Direction = newDir;
+
+        payload.depth++;
+	}
+
+	RTOutput[LaunchIndex.xy] = float4(accumulatedColor, 1.f);
 }

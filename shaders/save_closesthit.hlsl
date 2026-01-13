@@ -14,6 +14,9 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
     // For now, just use diffuse as the sphere color
     float3 color = baseColor;
 
+    // To simulate the old version...
+    // float3 color = float3(0.3, 0.3, 0.3);
+
     // Write result to the payload
     payload.ShadedColor = color;
     payload.HitT        = RayTCurrent();
