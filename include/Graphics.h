@@ -98,7 +98,7 @@ namespace DXR
 {	
 	void Create_Bottom_Level_AS_Model(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, Model &model);
 	void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, Sphere &sphere);
-	void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources);
+	void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, std::vector<Instance> &world_objs);
 	void Create_RayGen_Program(D3D12Global &d3d, DXRGlobal &dxr, D3D12ShaderCompilerInfo &shaderCompiler);
 	void Create_Miss_Program(D3D12Global &d3d, DXRGlobal &dxr, D3D12ShaderCompilerInfo &shaderCompiler);
 	void Create_Closest_Hit_Program(D3D12Global &d3d, DXRGlobal &dxr, D3D12ShaderCompilerInfo &shaderCompiler);

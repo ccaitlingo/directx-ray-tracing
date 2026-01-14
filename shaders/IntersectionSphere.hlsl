@@ -7,36 +7,13 @@ void IntersectionSphere()
 {
     float RayTMax = 10000.0f;
     uint id = InstanceID();
-    
-    // World-space to Object-space transform
-    float4x4 worldToObject;
+    float3x4 worldToObject = WorldToObject3x4();
 
-    // Identity
-    worldToObject[0][0] = 1; worldToObject[0][1] = 0; worldToObject[0][2] = 0; worldToObject[0][3] = 0;
-    worldToObject[1][0] = 0; worldToObject[1][1] = 1; worldToObject[1][2] = 0; worldToObject[1][3] = 0;
-    worldToObject[2][0] = 0; worldToObject[2][1] = 0; worldToObject[2][2] = 1; worldToObject[2][3] = 0;
-    worldToObject[3][0] = 0; worldToObject[3][1] = 0; worldToObject[3][2] = 0; worldToObject[3][3] = 1;
-        
-    if (id == 1)
-    {
-        // Sphere 1
-        worldToObject[0][0] = 0.033; // Fat in X
-        worldToObject[1][1] = 0.033; // Fat in Y
-        worldToObject[2][2] = 0.033; // Fat in Z
-        worldToObject[1][3] = 31.0/30.0; // Move down in the Y direction (units translated / scale)
-    }
-    
-    // Get world-space ray origin and direction
-    float3 rayOriginWS = WorldRayOrigin();
-    float3 rayDirWS = WorldRayDirection();
+    // Transform ray from world space to object space
+    float3 rayOriginOS = mul(worldToObject, float4(WorldRayOrigin(), 1.0f));
+    float3 rayDirOS   = normalize(mul(worldToObject, float4(WorldRayDirection(), 0.0f))); // Direction may be scaled by matrix; normalize it
 
-    // Transform ray to object space
-    float4 rayOriginOS4 = mul(worldToObject, float4(rayOriginWS, 1.0f));
-    float4 rayDirOS4   = mul(worldToObject, float4(rayDirWS, 0.0f));
-    float3 rayOriginOS = rayOriginOS4.xyz / rayOriginOS4.w;
-    float3 rayDirOS    = normalize(rayDirOS4.xyz); // Direction may be scaled by matrix; normalize it
-
-    // Position (object space)
+    // Position in object space
     float3 sphereCenterOS = float3(0.0f, 0.0f, 0.0f);
 
     // Unit sphere

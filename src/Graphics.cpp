@@ -942,7 +942,7 @@ void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resour
 /**
 * Create the top level acceleration structure and its associated buffers.
 */
-void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources) 
+void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, std::vector<Instance> &world_objs) 
 {
 	// Describe the TLAS geometry instance(s)
 	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc[2] = {};
@@ -959,11 +959,12 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	instanceDesc[1].InstanceID = 1;
 	instanceDesc[1].InstanceContributionToHitGroupIndex = 1;
 	instanceDesc[1].InstanceMask = 0xFF;
-	instanceDesc[1].Transform[0][0] = instanceDesc[1].Transform[1][1] = instanceDesc[1].Transform[2][2] = 1;
-	instanceDesc[1].Transform[0][0] = 30;  // Fat in X
-	instanceDesc[1].Transform[1][1] = 30;  // Fat in Y
-	instanceDesc[1].Transform[2][2] = 30;  // Fat in Z
-	instanceDesc[1].Transform[1][3] = -31; // Move down by 31 units in Y (vertical direction)
+	// instanceDesc[1].Transform[0][0] = instanceDesc[1].Transform[1][1] = instanceDesc[1].Transform[2][2] = 1;
+	// instanceDesc[1].Transform[0][0] = 30;  // Fat in X
+	// instanceDesc[1].Transform[1][1] = 30;  // Fat in Y
+	// instanceDesc[1].Transform[2][2] = 30;  // Fat in Z
+	// instanceDesc[1].Transform[1][3] = -30; // Move down by 31 units in Y (vertical direction)
+	memcpy(instanceDesc[1].Transform, world_objs[1].transform3x4, sizeof(FLOAT) * 12);
 	instanceDesc[1].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
 	instanceDesc[1].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
 
@@ -1314,7 +1315,7 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 
 	// Add a state subobject for the ray tracing pipeline config
 	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
-	pipelineConfig.MaxTraceRecursionDepth = 2;
+	pipelineConfig.MaxTraceRecursionDepth = 1;
 
 	D3D12_STATE_SUBOBJECT pipelineConfigObject = {};
 	pipelineConfigObject.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;

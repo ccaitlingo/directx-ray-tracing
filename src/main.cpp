@@ -61,30 +61,26 @@ public:
 		// Create instances of the sphere
 		Instance sphere_a = 
 		{
-			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
-			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
-			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
-			{
-				{1.0f, 0.0f, 0.0f, 0.0f},
-				{0.0f, 1.0f, 0.0f, 0.0f},
-				{0.0f, 0.0f, 1.0f, -1.0f}
-			},
-			0,
-			0
+			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), // position
+			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // scale
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), // rotation
+			{}, // transform
+			0, // id
+			0 // hitGroupIndex
 		};
 		Instance sphere_b = 
 		{
-			DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),
-			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT3(0.0f, -30.75f, 0.0f),
+			DirectX::XMFLOAT3(30.0f, 30.0f, 30.0f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
-			{
-				{1.0f, 0.0f, 0.0f, 0.0f},
-				{0.0f, 1.0f, 0.0f, 0.0f},
-				{0.0f, 0.0f, 1.0f, 0.0f}
-			},
-			0,
+			{},
+			1,
 			0
 		};
+
+		// Calculate the transform
+		Utils::CalculateTransformMatrix(sphere_a);
+		Utils::CalculateTransformMatrix(sphere_b);
 
 		// Add to instance list
 		std::vector<Instance> world_objs;
@@ -115,7 +111,7 @@ public:
 		
 		// Create DXR specific resources
 		DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere);
-		DXR::Create_Top_Level_AS(d3d, dxr, resources);
+		DXR::Create_Top_Level_AS(d3d, dxr, resources, world_objs);
 		DXR::Create_DXR_Output(d3d, resources);
 		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, model);	
 		DXR::Create_RayGen_Program(d3d, dxr, shaderCompiler);

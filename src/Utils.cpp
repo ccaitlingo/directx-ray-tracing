@@ -266,6 +266,18 @@ void CreateSphere(float radius, Sphere &sphere, string filepath, Material &mater
 	sphere.radius = radius;
 }
 
+void CalculateTransformMatrix(Instance &instance)
+{
+    DirectX::XMMATRIX mat = DirectX::XMMatrixAffineTransformation(
+        DirectX::XMLoadFloat3(&instance.scale), 
+        DirectX::XMVectorZero(), 
+        DirectX::XMLoadFloat4(&instance.rotation), 
+        DirectX::XMLoadFloat3(&instance.position)
+    );
+    mat = XMMatrixTranspose(mat);
+	memcpy(instance.transform3x4, &mat, sizeof(FLOAT) * 12);
+}
+
 //--------------------------------------------------------------------------------------
 // Textures
 //--------------------------------------------------------------------------------------

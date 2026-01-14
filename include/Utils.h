@@ -39,6 +39,8 @@ namespace Utils
 
 	void CreateSphere(float radius, Sphere &sphere, std::string filepath, Material &material);
 
+	void CalculateTransformMatrix(Instance &instance);
+
 	void Validate(HRESULT hr, LPWSTR message);
 
 	TextureInfo LoadTexture(std::string filepath);
