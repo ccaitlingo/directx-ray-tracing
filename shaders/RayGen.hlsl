@@ -119,7 +119,7 @@ void RayGen()
             payload.throughput = saturate(payload.throughput); // clamp to [0,1]
 
 			// Setup ray for next bounce
-            ray.Origin = hitPos + newDir * 0.001f;
+            ray.Origin = hitPos + newDir * 0.1f;
             ray.Direction = newDir;
 
             payload.depth++;

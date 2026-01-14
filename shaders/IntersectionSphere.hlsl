@@ -11,7 +11,7 @@ void IntersectionSphere()
 
     // Transform ray from world space to object space
     float3 rayOriginOS = mul(worldToObject, float4(WorldRayOrigin(), 1.0f));
-    float3 rayDirOS   = normalize(mul(worldToObject, float4(WorldRayDirection(), 0.0f))); // Direction may be scaled by matrix; normalize it
+    float3 rayDirOS   = mul(worldToObject, float4(WorldRayDirection(), 0.0f));
 
     // Position in object space
     float3 sphereCenterOS = float3(0.0f, 0.0f, 0.0f);

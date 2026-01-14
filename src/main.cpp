@@ -64,13 +64,13 @@ public:
 			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), // position
 			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // scale
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), // rotation
-			{}, // transform
+			{}, // transform (set from position, scale, and rotation)
 			0, // id
 			0 // hitGroupIndex
 		};
 		Instance sphere_b = 
 		{
-			DirectX::XMFLOAT3(0.0f, -30.75f, 0.0f),
+			DirectX::XMFLOAT3(0.0f, -31.0f, 0.0f),
 			DirectX::XMFLOAT3(30.0f, 30.0f, 30.0f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 			{},
