@@ -39,6 +39,8 @@ namespace Utils
 
 	void CreateSphere(float radius, Sphere &sphere, std::string filepath, Material &material);
 
+	void CreateInstance(std::vector<Instance> &instance_list, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rotation, UINT id, UINT hitGroupIndex);
+	
 	void CalculateTransformMatrix(Instance &instance);
 
 	void Validate(HRESULT hr, LPWSTR message);

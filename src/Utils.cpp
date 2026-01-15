@@ -266,6 +266,18 @@ void CreateSphere(float radius, Sphere &sphere, string filepath, Material &mater
 	sphere.radius = radius;
 }
 
+void CreateInstance(std::vector<Instance> &instance_list, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex)
+{
+	// TODO: Expand to more than just spheres
+	Instance sphere = {pos, scale, rot, {}, id, hitGroupIndex};
+	
+	// Calculate the transform from position, scale, rotation
+	CalculateTransformMatrix(sphere);
+
+	// Add to instance list
+	instance_list.push_back(sphere);
+}
+
 void CalculateTransformMatrix(Instance &instance)
 {
     DirectX::XMMATRIX mat = DirectX::XMMatrixAffineTransformation(

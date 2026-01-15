@@ -52,40 +52,33 @@ public:
 		d3d.height = config.height;
 		d3d.vsync = config.vsync;
 
+		// Create list of objects to be rendered in the world
+		std::vector<Instance> world_objs;
+
 		// Load a model
 		// Utils::LoadModel(config.model, model, material);
 
 		// Create a sphere
 		Utils::CreateSphere(1.0f, sphere, "red.mtl", material);
 
-		// Create instances of the sphere
-		Instance sphere_a = 
-		{
+		// Create Instance 0 of sphere
+		Utils::CreateInstance(
+			world_objs,
 			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), // position
 			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // scale
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), // rotation
-			{}, // transform (set from position, scale, and rotation)
 			0, // id
 			0 // hitGroupIndex
-		};
-		Instance sphere_b = 
-		{
+		);
+		// Create Instance 1 of sphere
+		Utils::CreateInstance(
+			world_objs,
 			DirectX::XMFLOAT3(0.0f, -31.0f, 0.0f),
 			DirectX::XMFLOAT3(30.0f, 30.0f, 30.0f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
-			{},
 			1,
 			0
-		};
-
-		// Calculate the transform
-		Utils::CalculateTransformMatrix(sphere_a);
-		Utils::CalculateTransformMatrix(sphere_b);
-
-		// Add to instance list
-		std::vector<Instance> world_objs;
-		world_objs.push_back(sphere_a);
-		world_objs.push_back(sphere_b);
+		);
 
 		// Initialize the shader compiler
 		D3DShaders::Init_Shader_Compiler(shaderCompiler);
