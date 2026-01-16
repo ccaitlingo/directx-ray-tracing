@@ -234,7 +234,7 @@ void LoadModel(string filepath, Model &model, Material &material)
 	}
 }
 
-void CreateSphere(float radius, Sphere &sphere, string filepath, Material &material) 
+void CreateSphere(float radius, Sphere &sphere, string filepath, std::vector<Material> &material_list) 
 {
 	std::vector<tinyobj::material_t> materials;
     std::map<std::string, int> matMap;
@@ -249,17 +249,21 @@ void CreateSphere(float radius, Sphere &sphere, string filepath, Material &mater
 		throw std::runtime_error(err);
 	}
 
-	// Get the first material
-	// Only support a single material right now
-	material.name = materials[0].name;
-	material.texturePath = materials[0].diffuse_texname;
-	material.dissolve = materials[0].dissolve;
-	material.shininess = materials[0].shininess;
-	material.illum = materials[0].illum;
-	for (int i = 0; i < 3; i++)
+	// Get materials
+	for (size_t i = 0; i < materials.size(); i++)
 	{
-		material.ambient[i] = materials[0].ambient[i];
-		material.diffuse[i] = materials[0].diffuse[i];
+		Material current_material = {};
+		current_material.name = materials[i].name;
+		current_material.texturePath = materials[i].diffuse_texname;
+		current_material.dissolve = materials[i].dissolve;
+		current_material.shininess = materials[i].shininess;
+		current_material.illum = materials[i].illum;
+		for (int j = 0; j < 3; j++)
+		{
+			current_material.ambient[j] = materials[i].ambient[j];
+			current_material.diffuse[j] = materials[i].diffuse[j];
+		}
+		material_list.push_back(current_material);
 	}
 
 	// Load the radius

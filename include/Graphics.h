@@ -55,7 +55,7 @@ namespace D3DResources
 	void Create_Constant_Buffer(D3D12Global &d3d, ID3D12Resource** buffer, UINT64 size);
 	void Create_BackBuffer_RTV(D3D12Global &d3d, D3D12Resources &resources);
 	void Create_View_CB(D3D12Global &d3d, D3D12Resources &resources);
-	void Create_Material_CB(D3D12Global &d3d, D3D12Resources &resources, const Material &material);
+	void Create_Material_CB(D3D12Global &d3d, D3D12Resources &resources, const std::vector<Material> &materials);
 	void Create_Descriptor_Heaps(D3D12Global &d3d, D3D12Resources &resources);
 
 	void Update_View_CB(D3D12Global &d3d, D3D12Resources &resources);
@@ -105,7 +105,7 @@ namespace DXR
 	void Create_Sphere_Hit_Program(D3D12Global &d3d, DXRGlobal &dxr, D3D12ShaderCompilerInfo &shaderCompiler);
 	void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr);
 	void Create_Shader_Table(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources);
-	void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, const Model &model);
+	void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, const Model &model, const std::vector<Material> &materials);
 	void Create_DXR_Output(D3D12Global &d3d, D3D12Resources &resources);
 
 	void Build_Command_List(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources);

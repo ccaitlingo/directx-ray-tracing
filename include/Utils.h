@@ -37,7 +37,7 @@ namespace Utils
 
 	void LoadModel(std::string filepath, Model &model, Material &material);
 
-	void CreateSphere(float radius, Sphere &sphere, std::string filepath, Material &material);
+	void CreateSphere(float radius, Sphere &sphere, std::string filepath, std::vector<Material> &material);
 
 	void CreateInstance(std::vector<Instance> &instance_list, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rotation, UINT id, UINT hitGroupIndex);
 	

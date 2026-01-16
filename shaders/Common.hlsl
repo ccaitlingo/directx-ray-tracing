@@ -63,7 +63,12 @@ cbuffer ViewCB : register(b0)
 	float2 resolution;
 };
 
-cbuffer MaterialCB : register(b1)
+// Note
+// cbuffer MaterialCB : register(b1)
+// This constant buffer representing a single material
+// is now converted to represent a single material
+// within an array. The array is an SRV; see below.
+struct MaterialCB
 {
 	float4 textureResolution;
 	float4 ambient;
@@ -81,6 +86,7 @@ RaytracingAccelerationStructure SceneBVH	: register(t0);
 ByteAddressBuffer indices					: register(t1);
 ByteAddressBuffer vertices					: register(t2);
 Texture2D<float4> albedo					: register(t3);
+StructuredBuffer<MaterialCB> materials      : register(t4);
 
 // ---[ Helper Functions ]---
 

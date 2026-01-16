@@ -52,14 +52,11 @@ public:
 		d3d.height = config.height;
 		d3d.vsync = config.vsync;
 
-		// Create list of objects to be rendered in the world
-		std::vector<Instance> world_objs;
-
 		// Load a model
 		// Utils::LoadModel(config.model, model, material);
 
 		// Create a sphere
-		Utils::CreateSphere(1.0f, sphere, "red.mtl", material);
+		Utils::CreateSphere(1.0f, sphere, "colors.mtl", materials);
 
 		// Create Instance 0 of sphere
 		Utils::CreateInstance(
@@ -100,13 +97,13 @@ public:
 		D3DResources::Create_AABB_Buffer(d3d, resources, sphere);
 		// D3DResources::Create_Texture(d3d, resources, material);
 		D3DResources::Create_View_CB(d3d, resources);
-		D3DResources::Create_Material_CB(d3d, resources, material);
+		D3DResources::Create_Material_CB(d3d, resources, materials);
 		
 		// Create DXR specific resources
 		DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere);
 		DXR::Create_Top_Level_AS(d3d, dxr, resources, world_objs);
 		DXR::Create_DXR_Output(d3d, resources);
-		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, model);	
+		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, model, materials);	
 		DXR::Create_RayGen_Program(d3d, dxr, shaderCompiler);
 		DXR::Create_Miss_Program(d3d, dxr, shaderCompiler);
 		DXR::Create_Closest_Hit_Program(d3d, dxr, shaderCompiler);
@@ -151,8 +148,10 @@ public:
 private:
 	HWND window;
 	Model model;
-	Material material;
 	Sphere sphere;
+	// Material material;
+	std::vector<Material> materials;
+	std::vector<Instance> world_objs;
 
 	DXRGlobal dxr = {};
 	D3D12Global d3d = {};

@@ -306,25 +306,63 @@ void Create_View_CB(D3D12Global &d3d, D3D12Resources &resources)
 
 /**
 * Create and initialize the material constant buffer.
+* Deprecated - see Create_Material_Buffer.
 */
-void Create_Material_CB(D3D12Global &d3d, D3D12Resources &resources, const Material &material) 
+void Create_Material_CB(D3D12Global &d3d, D3D12Resources &resources, const std::vector<Material> &materials) 
 {
 	Create_Constant_Buffer(d3d, &resources.materialCB, sizeof(MaterialCB));
 #if NAME_D3D_RESOURCES
 	resources.materialCB->SetName(L"Material Constant Buffer");
 #endif
 
-	resources.materialCBData.resolution = XMFLOAT4(material.textureResolution, 0.f, 0.f, 0.f);
-	resources.materialCBData.ambient = XMFLOAT4(material.ambient[0], material.ambient[1], material.ambient[2], 0.0f);
-	resources.materialCBData.diffuse = XMFLOAT4(material.diffuse[0], material.diffuse[1], material.diffuse[2], 0.0f);
-	resources.materialCBData.dissolve = material.dissolve;
-	resources.materialCBData.shininess = material.shininess;
-	resources.materialCBData.illum = XMFLOAT2((float)material.illum, 0.f);
+	resources.materialCBData.resolution = XMFLOAT4(materials[0].textureResolution, 0.f, 0.f, 0.f);
+	resources.materialCBData.ambient = XMFLOAT4(materials[0].ambient[0], materials[0].ambient[1], materials[0].ambient[2], 0.0f);
+	resources.materialCBData.diffuse = XMFLOAT4(materials[0].diffuse[0], materials[0].diffuse[1], materials[0].diffuse[2], 0.0f);
+	resources.materialCBData.dissolve = materials[0].dissolve;
+	resources.materialCBData.shininess = materials[0].shininess;
+	resources.materialCBData.illum = XMFLOAT2((float)materials[0].illum, 0.f);
 
 	HRESULT hr = resources.materialCB->Map(0, nullptr, reinterpret_cast<void**>(&resources.materialCBStart));
 	Utils::Validate(hr, L"Error: failed to map Material constant buffer!");
 
 	memcpy(resources.materialCBStart, &resources.materialCBData, sizeof(resources.materialCBData));
+}
+
+/**
+* Create the material buffer.
+* Unlike Create_Material_CB, this resource is an
+* SRV buffer that represents an array of materials.
+*/
+void Create_Material_Buffer(D3D12Global &d3d, D3D12Resources &resources, const std::vector<Material> &materials)
+{
+    std::vector<MaterialCB> materialCBs(materials.size());
+    
+    // Convert each Material to MaterialCB format
+    for (size_t i = 0; i < materials.size(); i++)
+    {
+        materialCBs[i].resolution = XMFLOAT4(materials[i].textureResolution, 0.f, 0.f, 0.f);
+        materialCBs[i].ambient = XMFLOAT4(materials[i].ambient[0], materials[i].ambient[1], materials[i].ambient[2], 0.0f);
+        materialCBs[i].diffuse = XMFLOAT4(materials[i].diffuse[0], materials[i].diffuse[1], materials[i].diffuse[2], 0.0f);
+        materialCBs[i].dissolve = materials[i].dissolve;
+        materialCBs[i].shininess = materials[i].shininess;
+        materialCBs[i].illum = XMFLOAT2((float)materials[i].illum, 0.f);
+    }
+
+    // Create the material buffer resource
+    D3D12BufferCreateInfo info(((UINT)materialCBs.size() * sizeof(MaterialCB)), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+    Create_Buffer(d3d, info, &resources.materialBuffer);
+#if NAME_D3D_RESOURCES
+    resources.materialBuffer->SetName(L"Material Buffer");
+#endif
+
+    // Copy the material data to the material buffer
+    UINT8* pMaterialDataBegin;
+    D3D12_RANGE readRange = {};
+    HRESULT hr = resources.materialBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pMaterialDataBegin));
+    Utils::Validate(hr, L"Error: failed to map material buffer!");
+
+    memcpy(pMaterialDataBegin, materialCBs.data(), info.size);
+    resources.materialBuffer->Unmap(0, nullptr);
 }
 
 /**
@@ -398,15 +436,16 @@ void Destroy(D3D12Resources &resources)
 	if (resources.aabbBufferStart) resources.aabbBufferStart = nullptr;
 	if (resources.viewCB) resources.viewCB->Unmap(0, nullptr);
 	if (resources.viewCBStart) resources.viewCBStart = nullptr;
-	if (resources.materialCB) resources.materialCB->Unmap(0, nullptr);
-	if (resources.materialCBStart) resources.materialCBStart = nullptr;
+	// if (resources.materialCB) resources.materialCB->Unmap(0, nullptr);
+	// if (resources.materialCBStart) resources.materialCBStart = nullptr;
 
 	SAFE_RELEASE(resources.DXROutput);
 	SAFE_RELEASE(resources.vertexBuffer);
 	SAFE_RELEASE(resources.indexBuffer);
 	SAFE_RELEASE(resources.aabbBuffer);
+	SAFE_RELEASE(resources.materialBuffer);
 	SAFE_RELEASE(resources.viewCB);
-	SAFE_RELEASE(resources.materialCB);
+	// SAFE_RELEASE(resources.materialCB);
 	SAFE_RELEASE(resources.rtvHeap);
 	SAFE_RELEASE(resources.descriptorHeap);
 	SAFE_RELEASE(resources.texture);
@@ -1049,7 +1088,7 @@ void Create_RayGen_Program(D3D12Global &d3d, DXRGlobal &dxr, D3D12ShaderCompiler
 	D3D12_DESCRIPTOR_RANGE ranges[3];
 
 	ranges[0].BaseShaderRegister = 0;
-	ranges[0].NumDescriptors = 2;
+	ranges[0].NumDescriptors = 1;
 	ranges[0].RegisterSpace = 0;
 	ranges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	ranges[0].OffsetInDescriptorsFromTableStart = 0;
@@ -1058,13 +1097,13 @@ void Create_RayGen_Program(D3D12Global &d3d, DXRGlobal &dxr, D3D12ShaderCompiler
 	ranges[1].NumDescriptors = 1;
 	ranges[1].RegisterSpace = 0;
 	ranges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	ranges[1].OffsetInDescriptorsFromTableStart = 2;
+	ranges[1].OffsetInDescriptorsFromTableStart = 1;
 
 	ranges[2].BaseShaderRegister = 0;
-	ranges[2].NumDescriptors = 4;
+	ranges[2].NumDescriptors = 5;
 	ranges[2].RegisterSpace = 0;
 	ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	ranges[2].OffsetInDescriptorsFromTableStart = 3;
+	ranges[2].OffsetInDescriptorsFromTableStart = 2;
 
 	D3D12_ROOT_PARAMETER param0 = {};
 	param0.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -1268,8 +1307,6 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 
 	// Create a list of the shader export names that use the payload
 	const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup", L"HitGroupSphere" };
-	// const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroup" };
-	// const WCHAR* shaderExports[] = { L"RayGen_12", L"Miss_5", L"HitGroupSphere" };
 
 	// Add a state subobject for the association between shaders and the payload
 	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION shaderPayloadAssociation = {};
@@ -1292,8 +1329,6 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 
 	// Create a list of the shader export names that use the root signature
 	const WCHAR* rootSigExports[] = { L"RayGen_12", L"HitGroup", L"HitGroupSphere", L"Miss_5" };
-	// const WCHAR* rootSigExports[] = { L"RayGen_12", L"HitGroup", L"Miss_5" };
-	// const WCHAR* rootSigExports[] = { L"RayGen_12", L"HitGroupSphere", L"Miss_5" };
 
 	// Add a state subobject for the association between the RayGen shader and the local root signature
 	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION rayGenShaderRootSigAssociation = {};
@@ -1412,18 +1447,20 @@ void Create_Shader_Table(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 
 /**
 * Create the DXR descriptor heap for CBVs, SRVs, and the output UAV.
+* Note: I added materials as an argument only to get the NUMBER of materials easily.
 */
-void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, const Model &model)
+void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, const Model &model, const std::vector<Material> &materials)
 {
 	// Describe the CBV/SRV/UAV heap
 	// Need 7 entries:
 	// 1 CBV for the ViewCB
-	// 1 CBV for the MaterialCB
+	// --Deprecated-- 1 CBV for the MaterialCB
 	// 1 UAV for the RT output
 	// 1 SRV for the Scene BVH
 	// 1 SRV for the index buffer
 	// 1 SRV for the vertex buffer
 	// 1 SRV for the texture
+	// 1 SRV for the materials
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 	desc.NumDescriptors = 7;
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
@@ -1448,11 +1485,11 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 	d3d.device->CreateConstantBufferView(&cbvDesc, handle);
 
 	// Create the MaterialCB CBV
-	cbvDesc.SizeInBytes = ALIGN(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, sizeof(resources.materialCBData));
-	cbvDesc.BufferLocation = resources.materialCB->GetGPUVirtualAddress();
+	// cbvDesc.SizeInBytes = ALIGN(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, sizeof(resources.materialCBData));
+	// cbvDesc.BufferLocation = resources.materialCB->GetGPUVirtualAddress();
 
-	handle.ptr += handleIncrement;
-	d3d.device->CreateConstantBufferView(&cbvDesc, handle);
+	// handle.ptr += handleIncrement;
+	// d3d.device->CreateConstantBufferView(&cbvDesc, handle);
 
 	// Create the DXR output buffer UAV
 	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
@@ -1507,6 +1544,19 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 
 	handle.ptr += handleIncrement;
 	d3d.device->CreateShaderResourceView(resources.texture, &textureSRVDesc, handle);
+
+	// Create the material buffer SRV
+	D3D12_SHADER_RESOURCE_VIEW_DESC materialSRVDesc = {};
+	materialSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	materialSRVDesc.Format = DXGI_FORMAT_UNKNOWN;
+	materialSRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+	materialSRVDesc.Buffer.StructureByteStride = sizeof(MaterialCB);
+	materialSRVDesc.Buffer.FirstElement = 0;
+	materialSRVDesc.Buffer.NumElements = static_cast<UINT>(materials.size());
+	materialSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+	handle.ptr += handleIncrement;
+	d3d.device->CreateShaderResourceView(resources.materialBuffer, &materialSRVDesc, handle);
 }
 
 /**
