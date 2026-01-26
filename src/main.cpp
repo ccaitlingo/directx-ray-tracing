@@ -97,7 +97,8 @@ public:
 		D3DResources::Create_AABB_Buffer(d3d, resources, sphere);
 		// D3DResources::Create_Texture(d3d, resources, material);
 		D3DResources::Create_View_CB(d3d, resources);
-		D3DResources::Create_Material_CB(d3d, resources, materials);
+		// D3DResources::Create_Material_CB(d3d, resources, materials);
+		D3DResources::Create_Material_Buffer(d3d, resources, materials);
 		
 		// Create DXR specific resources
 		DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere);

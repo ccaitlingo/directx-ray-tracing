@@ -6,7 +6,6 @@
 void IntersectionSphere()
 {
     float RayTMax = 10000.0f;
-    uint id = InstanceID();
     float3x4 worldToObject = WorldToObject3x4();
 
     // Transform ray from world space to object space

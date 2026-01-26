@@ -224,7 +224,6 @@ struct D3D12Resources
 	UINT8*											materialCBStart = nullptr;
 
 	ID3D12Resource*									materialBuffer = nullptr;
-	D3D12_INDEX_BUFFER_VIEW							materialBufferView;
 
 	ID3D12DescriptorHeap*							rtvHeap = nullptr;
 	ID3D12DescriptorHeap*							descriptorHeap = nullptr;
