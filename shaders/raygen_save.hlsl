@@ -55,34 +55,20 @@ void RayGen()
         );
         ray.TMin = 0.05f;
         ray.TMax = 1000.f;
-        int depth = 0;
 
         // Initialize the payload
         HitInfo payload;
         payload.ShadedColor = float3(0.f, 0.f, 0.f);
         payload.HitT = 0.f;
         payload.throughput = float3(1.0f, 1.0f, 1.0f);
-        payload.HitNormal = float3(0.f, 0.f, 0.f);
-        payload.nextPos = float3(0.f, 0.f, 0.f);
-        payload.nextDir = float3(0.f, 0.f, 0.f);
-        payload.random = float2(0.f, 0.f);
-        payload.shininess = 0.f;
-        payload.pad = 0.f;
+        payload.depth = 0;
 
 		// Initialized accumulated color
-        float3 radiance = float3(0.f, 0.f, 0.f);
+        float3 sampleColor = float3(0.f, 0.f, 0.f);
 
         // Trace the ray(s)
         for (int bounce = 0; bounce < MAX_BOUNCES; ++bounce)
         {
-            // Generate random numbers for hemisphere sampling
-        	// Include 'sample' in RNG to decorrelate samples
-            float rnd1 = RandomFloat(LaunchIndex, bounce + sample * MAX_BOUNCES, 0);
-            float rnd2 = RandomFloat(LaunchIndex, bounce + sample * MAX_BOUNCES, 1);
-            float2 xi = float2(rnd1, rnd2);
-
-            payload.random = xi;
-
             TraceRay(
                 SceneBVH,
                 RAY_FLAG_NONE,
@@ -94,26 +80,53 @@ void RayGen()
                 payload
             );
 
+            // Accumulate color
+            sampleColor += payload.throughput * payload.ShadedColor;
+
             // Check for termination
             if (bounce == MAX_BOUNCES - 1) // Max bounces
                 break;
 
             if (payload.HitT == -1) // Miss
-            {
-                // Accumulate color
-                radiance += payload.throughput * payload.ShadedColor;
                 break;
-            }
+
+			// Calculate hit position from ray origin + direction * t
+            float3 hitPos = ray.Origin + ray.Direction * payload.HitT;
+
+            // Get normal at hit point (you need to provide a method or payload info)
+			// Assume here payload.origin.xyz holds hit position and direction stores normal for demo
+			// Usually normal is returned via a special attribute or intersection shader
+			float3 N = normalize(payload.normal.rgb);
+
+			// Create orthonormal basis
+            float3 T, B;
+            CreateCoordinateSystem(N, T, B);
+
+            // Generate random numbers for hemisphere sampling
+        	// Include 'sample' in RNG to decorrelate samples
+            // float rnd1 = RandomFloat(LaunchIndex, bounce + sample * MAX_BOUNCES, 0);
+            // float rnd2 = RandomFloat(LaunchIndex, bounce + sample * MAX_BOUNCES, 1);
+            // float2 xi = float2(rnd1, rnd2);
+
+			// Sample hemisphere direction in tangent space
+            float3 sampleDir = SampleCosineWeightedHemisphere(xi);
+            
+			// Transform sampleDir to world space coordinate system
+			float3 newDir = normalize(sampleDir.x * T + sampleDir.y * B + sampleDir.z * N);
+
+			// Update throughput by multiplying by cosine and albedo (assuming albedo == payload.ShadedColor for demo)
+            payload.throughput *= payload.ShadedColor * dot(newDir, N);
+            payload.throughput = saturate(payload.throughput); // clamp to [0,1]
 
 			// Setup ray for next bounce
-            ray.Origin = payload.nextPos.xyz;
-            ray.Direction = payload.nextDir.xyz;
+            ray.Origin = hitPos + newDir * 0.1f;
+            ray.Direction = newDir;
 
-            depth++;
+            payload.depth++;
         }
 
         // Add this sample's contribution
-        accumulatedColor += radiance;
+        accumulatedColor += sampleColor;
     }
 
     // Average the samples

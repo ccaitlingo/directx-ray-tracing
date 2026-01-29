@@ -26,22 +26,34 @@
  */
 
 // ---[ Constants ]---
-#define MAX_BOUNCES 10
+#define MAX_BOUNCES 20
 
 // ---[ Structures ]---
 
 // struct HitInfo
 // {
-// 	float4 ShadedColorAndHitT;
+// 		float4 ShadedColorAndHitT;
 // };
 
-struct HitInfo
-{
+// struct HitInfo
+// {
+//      float3 ShadedColor;
+// 		float HitT;
+//      float3 throughput;
+// 		uint depth;
+// 		float4 normal;
+// };
+
+struct HitInfo {
     float3 ShadedColor;
-	float HitT;
+    float HitT;
     float3 throughput;
-	uint depth;
-	float4 normal;
+    float3 HitNormal;
+    float3 nextPos;
+	float3 nextDir;
+    float2 random;
+    float shininess; // material
+    float pad;
 };
 
 struct TriangleAttributes 
@@ -153,4 +165,19 @@ float3 SampleCosineWeightedHemisphere(float2 xi)
     float cosTheta = sqrt(1.0f - xi.y);
     float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
     return float3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+}
+
+// Random unit vector generation
+float3 RandomUnitVector(float2 xi)
+{
+    float z = 1.0f - 2.0f * xi.x;
+    float r = sqrt(max(0.0f, 1.0f - z * z));
+    float phi = 2.0f * 3.14159265f * xi.y;
+    return float3(r * cos(phi), r * sin(phi), z);
+}
+
+// Reflectance formula
+float3 Reflect(float3 v, float3 n)
+{
+    return v - 2.0f * dot(v, n) * n;
 }

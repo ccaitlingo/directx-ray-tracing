@@ -984,32 +984,41 @@ void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resour
 void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, std::vector<Instance> &world_objs) 
 {
 	// Describe the TLAS geometry instance(s)
-	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc[2] = {};
+	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc[3] = {};
+	// UINT numInstances = static_cast<UINT>(world_objs.size());
+	// std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instanceDesc(numInstances);
 
-	// Instance 0
-	instanceDesc[0].InstanceID = 0;
-	instanceDesc[0].InstanceContributionToHitGroupIndex = 1;
-	instanceDesc[0].InstanceMask = 0xFF;
-	instanceDesc[0].Transform[0][0] = instanceDesc[0].Transform[1][1] = instanceDesc[0].Transform[2][2] = 1;
-	instanceDesc[0].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
-	instanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+	// // Instance 0
+	// instanceDesc[0].InstanceID = world_objs[0].InstanceID;
+	// instanceDesc[0].InstanceContributionToHitGroupIndex = 1;
+	// instanceDesc[0].InstanceMask = 0xFF;
+	// instanceDesc[0].Transform[0][0] = instanceDesc[0].Transform[1][1] = instanceDesc[0].Transform[2][2] = 1;
+	// instanceDesc[0].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
+	// instanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
 
-	// Instance 1
-	instanceDesc[1].InstanceID = 1;
-	instanceDesc[1].InstanceContributionToHitGroupIndex = 1;
-	instanceDesc[1].InstanceMask = 0xFF;
-	// instanceDesc[1].Transform[0][0] = instanceDesc[1].Transform[1][1] = instanceDesc[1].Transform[2][2] = 1;
-	// instanceDesc[1].Transform[0][0] = 30;  // Fat in X
-	// instanceDesc[1].Transform[1][1] = 30;  // Fat in Y
-	// instanceDesc[1].Transform[2][2] = 30;  // Fat in Z
-	// instanceDesc[1].Transform[1][3] = -30; // Move down by 31 units in Y (vertical direction)
-	memcpy(instanceDesc[1].Transform, world_objs[1].transform3x4, sizeof(FLOAT) * 12);
-	instanceDesc[1].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
-	instanceDesc[1].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+	// // Instance 1
+	// instanceDesc[1].InstanceID = world_objs[1].InstanceID;
+	// instanceDesc[1].InstanceContributionToHitGroupIndex = 1;
+	// instanceDesc[1].InstanceMask = 0xFF;
+	// memcpy(instanceDesc[1].Transform, world_objs[1].transform3x4, sizeof(FLOAT) * 12);
+	// instanceDesc[1].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
+	// instanceDesc[1].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+
+	// Loop through the instances
+	for (int i = 0; i < 2; i++)
+	{
+		instanceDesc[i].InstanceID = world_objs[i].InstanceID;
+		instanceDesc[i].InstanceContributionToHitGroupIndex = 1;
+		instanceDesc[i].InstanceMask = 0xFF;
+		memcpy(instanceDesc[i].Transform, world_objs[i].transform3x4, sizeof(FLOAT) * 12);
+		instanceDesc[i].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
+		instanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+	}
 
 	// Create the TLAS instance buffer
 	D3D12BufferCreateInfo instanceBufferInfo;
 	instanceBufferInfo.size = sizeof(instanceDesc);
+	// instanceBufferInfo.size = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * numInstances;
 	instanceBufferInfo.heapType = D3D12_HEAP_TYPE_UPLOAD;
 	instanceBufferInfo.flags = D3D12_RESOURCE_FLAG_NONE;
 	instanceBufferInfo.state = D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -1022,6 +1031,7 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	UINT8* pData;
 	dxr.TLAS.pInstanceDesc->Map(0, nullptr, (void**)&pData);
 	memcpy(pData, &instanceDesc, sizeof(instanceDesc));
+	// memcpy(pData, instanceDesc.data(), instanceBufferInfo.size);
 	dxr.TLAS.pInstanceDesc->Unmap(0, nullptr);
 
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS buildFlags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
@@ -1296,7 +1306,8 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 
 	// Add a state subobject for the shader payload configuration
 	D3D12_RAYTRACING_SHADER_CONFIG shaderDesc = {};
-	shaderDesc.MaxPayloadSizeInBytes = sizeof(XMFLOAT4) * 3;	// RGB,HitT,throughput,depth,normal
+	// shaderDesc.MaxPayloadSizeInBytes = sizeof(XMFLOAT4) * 3;	// RGB,HitT,throughput,depth,normal
+	shaderDesc.MaxPayloadSizeInBytes = sizeof(XMFLOAT4) * 5;	// RGB,HitT,throughput,bounce,normal,shiniess,nextPos,nextDir
 	shaderDesc.MaxAttributeSizeInBytes = D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES;
 
 	D3D12_STATE_SUBOBJECT shaderConfigObject = {};

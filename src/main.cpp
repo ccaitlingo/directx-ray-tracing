@@ -67,7 +67,7 @@ public:
 			0, // id
 			0 // hitGroupIndex
 		);
-		// Create Instance 1 of sphere
+		// Create Instance 1 of sphere (large)
 		Utils::CreateInstance(
 			world_objs,
 			DirectX::XMFLOAT3(0.0f, -31.0f, 0.0f),
@@ -75,6 +75,15 @@ public:
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 			1,
 			0
+		);
+		// Create Instance 2 of sphere (blue)
+		Utils::CreateInstance(
+			world_objs,
+			DirectX::XMFLOAT3(2.0f, 0.0f, 2.0f), // position
+			DirectX::XMFLOAT3(3.0f, 3.0f, 3.0f), // scale
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), // rotation
+			2, // id
+			0 // hitGroupIndex
 		);
 
 		// Initialize the shader compiler
