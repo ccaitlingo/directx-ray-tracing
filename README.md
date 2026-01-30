@@ -1,14 +1,14 @@
-# Introduction To DirectX Raytracing
+# RTOW: DirectX Implementation
 
 ![A ray-traced scene with spheres of various materials and sizes](./demo_image.png)
 
-## RTOW & Intro to DXR
+## RTOW and Intro To DXR
 
-This project aims to implement Ray Tracing in One Weekend in DirectX.
+This project aims to implement Ray Tracing in One Weekend using DirectX.
 
-[Ray Tracing in One Weekend (RTOW)](https://raytracing.github.io/books/RayTracingInOneWeekend.html) is a path tracer written C++ that runs on the CPU. I have implemented this tutorial in 2024, along with adding my own extensions (emissive materials and triangle geometry), which can be found [here](https://github.com/ccaitlingo/ray-tracing-extensions).
+* [Ray Tracing in One Weekend (RTOW)](https://raytracing.github.io/books/RayTracingInOneWeekend.html) is a path tracer written C++ that runs on the CPU. I have implemented this tutorial in 2024, along with adding my own extensions (emissive materials and triangle geometry), which can be found [here](https://github.com/ccaitlingo/ray-tracing-extensions).
 
-Two years later, I learn about the GPU and want learn about path tracing using DirectX (DXR), one of the most common APIs for developing ray tracing programs that run on the GPU. [Intro To DXR]() is a startup framework for it. (Specifically, "A barebones application to get you jump started with DirectX Raytracing! Unlike other tutorials, this sample code _does not create or use any abstractions_ on top of the DXR Host API, and focuses on highlighting exactly what is new and different with DXR using the raw API call.")
+* Two years later, I learn about the GPU and want learn about path tracing using DirectX (DXR), one of the most common APIs for developing ray tracing programs that run on the GPU. [Intro To DXR](https://github.com/acmarrs/IntroToDXR) is a startup framework for it. (Specifically, "A barebones application to get you jump started with DirectX Raytracing! Unlike other tutorials, this sample code _does not create or use any abstractions_ on top of the DXR Host API, and focuses on highlighting exactly what is new and different with DXR using the raw API call.")
 
 ## Requirements
 
@@ -27,6 +27,9 @@ Two years later, I learn about the GPU and want learn about path tracing using D
 ```
 
 ## Intro To DXR: _Suggested Exercises_
+
+From Adam Marrs's Intro To DXR:
+
 After building and running the code, first thing I recommend you do is load up the Nsight Graphics project file (IntroToDXR.nsight-gfxproj), and capture a frame of the application running. This will provide a clear view of exactly what is happening as the application is running. [You can download Nsight Graphics here](https://developer.nvidia.com/nsight-graphics).
 
 Once you have a good understanding of how the application works, I encourage you to dig deeper into DXR by removing limitations of the current code and adding new rendering features. I suggest:
