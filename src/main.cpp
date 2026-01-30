@@ -58,32 +58,50 @@ public:
 		// Create a sphere
 		Utils::CreateSphere(1.0f, sphere, "colors.mtl", materials);
 
-		// Create Instance 0 of sphere
+		// Create Instance 0 of sphere (ground)
 		Utils::CreateInstance(
 			world_objs,
-			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), // position
-			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // scale
+			DirectX::XMFLOAT3(0.0f, -81.0f, 0.0f), // position
+			DirectX::XMFLOAT3(80.0f, 80.0f, 80.0f), // scale
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), // rotation
 			0, // id
-			0 // hitGroupIndex
+			0 // hitGroup
 		);
-		// Create Instance 1 of sphere (large)
+		// Create Instance 1 of sphere (pink)
 		Utils::CreateInstance(
 			world_objs,
-			DirectX::XMFLOAT3(0.0f, -31.0f, 0.0f),
-			DirectX::XMFLOAT3(30.0f, 30.0f, 30.0f),
+			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 			1,
 			0
 		);
-		// Create Instance 2 of sphere (blue)
+		// Create Instance 2 of sphere (purple)
 		Utils::CreateInstance(
 			world_objs,
-			DirectX::XMFLOAT3(2.0f, 0.0f, 2.0f), // position
-			DirectX::XMFLOAT3(3.0f, 3.0f, 3.0f), // scale
-			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), // rotation
-			2, // id
-			0 // hitGroupIndex
+			DirectX::XMFLOAT3(-2.0f, 0.0f, -0.5f),
+			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
+			2,
+			0
+		);
+		// Create Instance 3 of sphere (grey)
+		Utils::CreateInstance(
+			world_objs,
+			DirectX::XMFLOAT3(2.0f, -0.05f, -2.5f),
+			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
+			3,
+			0
+		);
+		// Create Instance 4 of sphere (metal)
+		Utils::CreateInstance(
+			world_objs,
+			DirectX::XMFLOAT3(1.2f, -0.75f, 0.0f),
+			DirectX::XMFLOAT3(0.25f, 0.25f, 0.25f),
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
+			4,
+			0
 		);
 
 		// Initialize the shader compiler
