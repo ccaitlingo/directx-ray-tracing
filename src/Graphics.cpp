@@ -1289,8 +1289,7 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 
 	// Add a state subobject for the shader payload configuration
 	D3D12_RAYTRACING_SHADER_CONFIG shaderDesc = {};
-	// shaderDesc.MaxPayloadSizeInBytes = sizeof(XMFLOAT4) * 3;	// RGB,HitT,throughput,depth,normal
-	shaderDesc.MaxPayloadSizeInBytes = sizeof(XMFLOAT4) * 5;	// RGB,HitT,throughput,bounce,normal,shiniess,nextPos,nextDir
+	shaderDesc.MaxPayloadSizeInBytes = sizeof(XMFLOAT4) * 5;	// RGB,HitT,throughput,normal,nextPos,nextDir,random,padding
 	shaderDesc.MaxAttributeSizeInBytes = D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES;
 
 	D3D12_STATE_SUBOBJECT shaderConfigObject = {};

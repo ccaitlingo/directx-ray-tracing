@@ -66,8 +66,6 @@ void RayGen()
         payload.nextPos = float3(0.f, 0.f, 0.f);
         payload.nextDir = float3(0.f, 0.f, 0.f);
         payload.random = float2(0.f, 0.f);
-        payload.shininess = 0.f;
-        payload.pad = 0.f;
 
 		// Initialized accumulated color
         float3 radiance = float3(0.f, 0.f, 0.f);
@@ -76,12 +74,16 @@ void RayGen()
         for (int bounce = 0; bounce < MAX_BOUNCES; ++bounce)
         {
             // Generate random numbers for hemisphere sampling
-        	// Include 'sample' in RNG to decorrelate samples
-            float rnd1 = RandomFloat(LaunchIndex, bounce + sample * MAX_BOUNCES, 0);
-            float rnd2 = RandomFloat(LaunchIndex, bounce + sample * MAX_BOUNCES, 1);
-            float2 xi = float2(rnd1, rnd2);
+            // Build distinct keys for each dimension
+            uint pixelID = LaunchIndex.x + LaunchIndex.y * LaunchDimensions.x;
+            uint baseKey = pixelID
+                        ^ (uint(sample) * 0x9E3779B9u)
+                        ^ (uint(bounce) * 0x7F4A7C15u);
 
-            payload.random = xi;
+            float rnd1 = RandomFloat(baseKey ^ 0u);  // hemisphere phi / x
+            float rnd2 = RandomFloat(baseKey ^ 0xB5297A4Du); // hemisphere y
+
+            payload.random = float2(rnd1, rnd2);
 
             TraceRay(
                 SceneBVH,
@@ -100,7 +102,7 @@ void RayGen()
 
             if (payload.HitT == -1) // Miss
             {
-                // Accumulate color
+                // The sky is a light source
                 radiance += payload.throughput * payload.ShadedColor;
                 break;
             }

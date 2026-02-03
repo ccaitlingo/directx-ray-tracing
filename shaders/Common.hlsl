@@ -35,15 +35,6 @@
 // 		float4 ShadedColorAndHitT;
 // };
 
-// struct HitInfo
-// {
-//      float3 ShadedColor;
-// 		float HitT;
-//      float3 throughput;
-// 		uint depth;
-// 		float4 normal;
-// };
-
 struct HitInfo {
     float3 ShadedColor;
     float HitT;
@@ -52,8 +43,7 @@ struct HitInfo {
     float3 nextPos;
 	float3 nextDir;
     float2 random;
-    float shininess; // material
-    float pad;
+    float2 padding;
 };
 
 struct TriangleAttributes 
@@ -133,15 +123,17 @@ VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics)
 	return v;
 }
 
-// Generate a random float in [0,1) per thread. Later, replace with preferred randomness generator
-float RandomFloat(uint2 pixelCoords, uint bounce, uint seed)
+uint pcg_hash(uint input)
 {
-    // Simple hash-based hash random number generator
-    uint hash = pixelCoords.x + pixelCoords.y * 73856093u + bounce * 19349663u + seed * 83492791u;
-    hash ^= hash << 13;
-    hash ^= hash >> 17;
-    hash ^= hash << 5;
-    return (float)(hash & 0x00FFFFFF) / 16777216.0f;
+    uint state = input * 747796405u + 2891336453u;
+    uint word  = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+// Generate a random float in [0,1) per thread
+float RandomFloat(uint key)
+{
+    return (pcg_hash(key) & 0x00FFFFFFu) / 16777216.0f;
 }
 
 // Create an orthonormal basis (Tangent, Bitangent) from a given normal

@@ -13,12 +13,11 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
     float3 baseColor    = material.diffuse.rgb;
     float3 ambientTerm  = material.ambient.rgb;
     float shininess     = material.shininess;
+    float illum         = material.illum.x;
     float3 color = baseColor;
 
     // Calculate hit position from ray origin + direction * t
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
-    float3 sampleDir = float3(0.f, 0.f, 0.f);
-    float3 newDir = float3(0.f, 0.f, 0.f);
 
     // Create orthonormal basis
     float3 T, B;
@@ -37,9 +36,9 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
         float3 nextDir = normalize(reflectedDir + fuzz * RandomUnitVector(payload.random));
 
         // Reject rays that go below the surface
-        if (dot(nextDir, N) <= 0.0f)
+        if (dot(nextDir, N) <= 0.f)
         {
-            payload.throughput = float3(0, 0, 0); // absorb
+            payload.throughput = float3(0.f, 0.f, 0.f); // absorb
             return;
         }
 
@@ -50,7 +49,7 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
     {
         // Diffuse
         // Sample hemisphere direction in tangent space
-        sampleDir = SampleCosineWeightedHemisphere(payload.random);
+        float3 sampleDir = SampleCosineWeightedHemisphere(payload.random);
         float3 nextDir = normalize(sampleDir.x * T + sampleDir.y * B + sampleDir.z * N);
 
         // Transform sampleDir to world space coordinate system
@@ -63,7 +62,7 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
 
     
     // Write result to the payload
-    payload.ShadedColor = color;
+    payload.ShadedColor = color * illum;
     payload.HitT        = RayTCurrent();
     payload.HitNormal   = N;
     payload.nextPos     = hitPos;
