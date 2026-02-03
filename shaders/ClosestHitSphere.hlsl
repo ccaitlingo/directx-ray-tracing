@@ -19,9 +19,8 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
     // Early termination when a ray hits a light source
     if (illum > 0)
     {
-        payload.ShadedColor = color;
+        payload.ShadedColor = color *illum;
         payload.illum = illum;
-        payload.HitT = RayTCurrent();
         payload.throughput = float3(1.0f, 1.0f, 1.0f); // No attenuation
         return;
     }
@@ -44,7 +43,7 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
 
         // Fuzz
         float3 nextDir = normalize(reflectedDir + fuzz * RandomUnitVector(payload.random));
-
+        
         // Reject rays that go below the surface
         if (dot(nextDir, N) <= 0.f)
         {
@@ -52,7 +51,7 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
         }
 
         // Fresnel (Schlick Approximation)
-        float cosTheta = saturate(dot(reflectedDir, N));
+        float cosTheta = saturate(dot(-incidentDir, N));
         float3 F0 = baseColor;
         float3 F = F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
 
@@ -75,7 +74,7 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
     }
     
     // Write result to the payload
-    payload.ShadedColor = color * illum;
+    payload.ShadedColor = float3(0.f, 0.f, 0.f);
     payload.illum       = illum;
     payload.HitT        = RayTCurrent();
     payload.HitNormal   = N;

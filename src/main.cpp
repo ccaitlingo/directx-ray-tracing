@@ -67,7 +67,7 @@ public:
 			0, // id
 			0 // hitGroup
 		);
-		// Create Instance 1 of sphere (pink)
+		// Create Instance 1 of sphere (center)
 		Utils::CreateInstance(
 			world_objs,
 			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
@@ -76,7 +76,7 @@ public:
 			1,
 			0
 		);
-		// Create Instance 2 of sphere (purple)
+		// Create Instance 2 of sphere (right)
 		Utils::CreateInstance(
 			world_objs,
 			DirectX::XMFLOAT3(-2.0f, 0.0f, -0.5f),
@@ -85,7 +85,7 @@ public:
 			2,
 			0
 		);
-		// Create Instance 3 of sphere (grey)
+		// Create Instance 3 of sphere (left)
 		Utils::CreateInstance(
 			world_objs,
 			DirectX::XMFLOAT3(2.0f, -0.05f, -2.5f),
@@ -94,13 +94,22 @@ public:
 			3,
 			0
 		);
-		// Create Instance 4 of sphere (metal)
+		// Create Instance 4 of sphere (small left)
 		Utils::CreateInstance(
 			world_objs,
-			DirectX::XMFLOAT3(1.2f, -0.75f, 0.0f),
-			DirectX::XMFLOAT3(0.25f, 0.25f, 0.25f),
+			DirectX::XMFLOAT3(1.2f, -0.65f, 0.0f),
+			DirectX::XMFLOAT3(0.35f, 0.35f, 0.35f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 			4,
+			0
+		);
+		// Create Instance 4 of sphere (small right)
+		Utils::CreateInstance(
+			world_objs,
+			DirectX::XMFLOAT3(-1.2f, -0.75f, 0.0f),
+			DirectX::XMFLOAT3(0.25f, 0.25f, 0.25f),
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
+			5,
 			0
 		);
 
