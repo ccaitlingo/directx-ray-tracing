@@ -43,7 +43,8 @@ struct HitInfo {
     float3 nextPos;
 	float3 nextDir;
     float2 random;
-    float2 padding;
+    float illum;
+    float padding;
 };
 
 struct TriangleAttributes 

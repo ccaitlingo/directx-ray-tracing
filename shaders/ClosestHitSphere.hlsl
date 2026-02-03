@@ -63,6 +63,7 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
     
     // Write result to the payload
     payload.ShadedColor = color * illum;
+    payload.illum       = illum;
     payload.HitT        = RayTCurrent();
     payload.HitNormal   = N;
     payload.nextPos     = hitPos;

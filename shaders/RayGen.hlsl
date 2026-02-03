@@ -66,6 +66,7 @@ void RayGen()
         payload.nextPos = float3(0.f, 0.f, 0.f);
         payload.nextDir = float3(0.f, 0.f, 0.f);
         payload.random = float2(0.f, 0.f);
+        payload.illum = 0.f;
 
 		// Initialized accumulated color
         float3 radiance = float3(0.f, 0.f, 0.f);
@@ -102,9 +103,16 @@ void RayGen()
 
             if (payload.HitT == -1) // Miss
             {
-                // The sky is a light source
+                // Accumulate light (the sky is a light source)
                 radiance += payload.throughput * payload.ShadedColor;
                 break;
+            }
+
+            // Check for light sources
+            if (payload.illum > 0)
+            {
+                // Accumulate light
+                radiance += payload.ShadedColor;
             }
 
 			// Setup ray for next bounce
