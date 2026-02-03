@@ -6,7 +6,7 @@ newmtl ground
     illum 0
 newmtl light
     Ka 0.0 0.0 0.0
-    Kd 0.60 0.60 0.30
+    Kd 0.95 0.95 0.70
     d 1
     Ns 80
     illum 1
@@ -16,7 +16,7 @@ newmtl purple
     d 1
     Ns 1
     illum 0
-newmtl pinks
+newmtl pink
     Ka 0.0 0.0 0.0
     Kd 0.9375 0.5469 0.6797
     d 1

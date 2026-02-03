@@ -16,6 +16,16 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
     float illum         = material.illum.x;
     float3 color = baseColor;
 
+    // Early termination when a ray hits a light source
+    if (illum > 0)
+    {
+        payload.ShadedColor = color;
+        payload.illum = illum;
+        payload.HitT = RayTCurrent();
+        payload.throughput = float3(1.0f, 1.0f, 1.0f); // No attenuation
+        return;
+    }
+
     // Calculate hit position from ray origin + direction * t
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 
@@ -38,12 +48,16 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
         // Reject rays that go below the surface
         if (dot(nextDir, N) <= 0.f)
         {
-            payload.throughput = float3(0.f, 0.f, 0.f); // absorb
-            return;
+            nextDir = reflectedDir; // fall back to perfect reflection
         }
 
+        // Fresnel (Schlick Approximation)
+        float cosTheta = saturate(dot(reflectedDir, N));
+        float3 F0 = baseColor;
+        float3 F = F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+
         payload.nextDir = nextDir;
-        payload.throughput *= color;
+        payload.throughput *= F;
     }
     else
     {
@@ -59,7 +73,6 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
         payload.throughput *= color * dot(nextDir, N);
         payload.throughput = saturate(payload.throughput); // clamp to [0,1]
     }
-
     
     // Write result to the payload
     payload.ShadedColor = color * illum;

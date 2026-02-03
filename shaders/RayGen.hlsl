@@ -53,7 +53,7 @@ void RayGen()
             (d.y * view[1].xyz * viewOriginAndTanHalfFovY.w) +
             view[2].xyz
         );
-        ray.TMin = 0.05f;
+        ray.TMin = 0.001;
         ray.TMax = 1000.f;
         int depth = 0;
 
@@ -101,18 +101,12 @@ void RayGen()
             if (bounce == MAX_BOUNCES - 1) // Max bounces
                 break;
 
-            if (payload.HitT == -1) // Miss
-            {
-                // Accumulate light (the sky is a light source)
-                radiance += payload.throughput * payload.ShadedColor;
-                break;
-            }
-
             // Check for light sources
-            if (payload.illum > 0)
+            if ((payload.HitT == -1) || (payload.illum > 0)) // Miss (sky) or other light source
             {
                 // Accumulate light
-                radiance += payload.ShadedColor;
+                radiance += payload.throughput * payload.ShadedColor;
+                break;
             }
 
 			// Setup ray for next bounce
