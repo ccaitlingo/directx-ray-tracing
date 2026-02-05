@@ -7,7 +7,8 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
 {
     // Get instance ID and material
     uint instanceID = InstanceID();
-    MaterialCB material = materials[instanceID];
+    uint matIndex = instanceID == 0 ? 0 : ((instanceID - 1u) % 5u) + 1u; // Except ground, map to 1-5
+    MaterialCB material = materials[matIndex];
 
     // Material
     float3 baseColor    = material.diffuse.rgb;
