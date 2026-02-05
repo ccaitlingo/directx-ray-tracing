@@ -68,9 +68,9 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
         // Transform sampleDir to world space coordinate system
         payload.nextDir = nextDir;
 
-        // Update throughput by multiplying by cosine and color
-        payload.throughput *= color * dot(nextDir, N);
-        payload.throughput = saturate(payload.throughput); // clamp to [0,1]
+        // Update throughput by multiplying by color
+        payload.ShadedColor = float3(0,0,0);  // No emission
+        payload.throughput *= color;          // Attenuation = albedo
     }
     
     // Write result to the payload

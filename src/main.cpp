@@ -97,7 +97,7 @@ public:
 		// Create Instance 4 of sphere (small left)
 		Utils::CreateInstance(
 			world_objs,
-			DirectX::XMFLOAT3(1.2f, -0.65f, 0.0f),
+			DirectX::XMFLOAT3(1.25f, -0.65f, 0.0f),
 			DirectX::XMFLOAT3(0.35f, 0.35f, 0.35f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 			4,

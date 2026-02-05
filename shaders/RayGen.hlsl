@@ -97,21 +97,18 @@ void RayGen()
                 payload
             );
 
+            // Accumulate color
+            radiance += payload.throughput * payload.ShadedColor;
+            
             // Check for termination
-            if (bounce == MAX_BOUNCES - 1) // Max bounces
-                break;
+            if (bounce == MAX_BOUNCES - 1) break;
 
             // Check for light sources
-            if ((payload.HitT == -1) || (payload.illum > 0)) // Miss (sky) or other light source
-            {
-                // Accumulate light
-                radiance += payload.throughput * payload.ShadedColor;
-                break;
-            }
-
-			// Setup ray for next bounce
-            ray.Origin = payload.nextPos.xyz;
-            ray.Direction = payload.nextDir.xyz;
+            if (payload.HitT <= 0 || payload.illum > 0) break;
+            
+            // Set up ray for next bounce
+            ray.Origin = payload.nextPos;
+            ray.Direction = payload.nextDir;
 
             depth++;
         }
