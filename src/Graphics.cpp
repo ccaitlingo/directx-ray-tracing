@@ -524,6 +524,11 @@ void Compile_Shader(D3D12ShaderCompilerInfo &compilerInfo, D3D12ShaderInfo &info
 */
 void Compile_Shader(D3D12ShaderCompilerInfo &compilerInfo, RtProgram &program) 
 {
+	// Add debug arguments for profiling (Nsight Graphics)
+	static LPCWSTR debugArgs[] = { L"-Zi" };
+    program.info.arguments = debugArgs;
+    program.info.argCount = _countof(debugArgs);
+	
 	Compile_Shader(compilerInfo, program.info, &program.blob);	
 	program.SetBytecode();
 }
