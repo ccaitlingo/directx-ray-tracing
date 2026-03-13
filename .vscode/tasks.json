@@ -3,15 +3,14 @@
     "tasks": [
         {
             "label": "build",
-            "type": "shell",
-            "command": "& 'C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\MSBuild\\Current\\Bin\\MSBuild.exe' '.\\IntroToDXR.sln' /m /p:Configuration=Debug /p:Platform=x64",
-            "windows": {
+            "type": "shell","windows": {
                 "command": "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\MSBuild\\Current\\Bin\\MSBuild.exe",
                 "args": [
                     ".\\IntroToDXR.sln",
                     "/m",
-                    "/p:Configuration=Debug",
+                    "/p:Configuration=Release",
                     "/p:Platform=x64",
+                    "/p:VersionTag=v2"
                 ]
             },
             "group": {

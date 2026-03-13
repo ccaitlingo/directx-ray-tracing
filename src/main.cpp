@@ -29,13 +29,11 @@
 #include "Graphics.h"
 #include "Utils.h"
 
-#ifdef _DEBUG
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
 #include <random>
 #include <vector>
-#endif
 
 // Random number seed
 static std::mt19937_64 gRng{1234u};
