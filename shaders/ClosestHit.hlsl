@@ -1,30 +1,3 @@
-/* Copyright (c) 2018-2019, NVIDIA CORPORATION. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *  * Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *  * Neither the name of NVIDIA CORPORATION nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
- * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 #include "Common.hlsl"
 
 // ---[ Triangle Closest Hit Shader ]---
@@ -34,16 +7,85 @@ void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
 {
 	// Get primitive index, instance ID, and material
 	uint triangleIndex = PrimitiveIndex();
-	uint instanceID = InstanceID();
-	MaterialCB material = materials[0]; // change later to instanceID
+    uint instanceID = InstanceID();
+    uint matIndex = instanceID == 0 ? 0 : ((instanceID - 1u) % 5u) + 1u; // Except ground, map to 1-5
+    MaterialCB material = materials[matIndex];
+
+	// Material
+	float3 baseColor    = material.diffuse.rgb;
+    float3 ambientTerm  = material.ambient.rgb;
+    float shininess     = material.shininess;
+	float illum         = material.illum.x;
+	float3 color = baseColor;
 
 	// Calculate the triangle barycentric coordinates
 	float3 barycentrics = float3((1.0f - attrib.uv.x - attrib.uv.y), attrib.uv.x, attrib.uv.y);
+
+	// Get the base color from the texture
 	VertexAttributes vertex = GetVertexAttributes(triangleIndex, barycentrics);
-
 	int2 coord = floor(vertex.uv * material.textureResolution.x);
-	float3 color = albedo.Load(int3(coord, 0)).rgb;
+	// float3 color = albedo.Load(int3(coord, 0)).rgb;
 
-	payload.ShadedColor = color;
+	// Early termination when a ray hits a light source
+    if (illum > 0)
+    {
+        payload.ShadedColor = color * illum;
+        payload.throughput = float3(1.0f, 1.0f, 1.0f); // No attenuation
+        return;
+    }
+
+	// Calculate hit position from ray origin + direction * t
+    float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+
+	// Prepare to calculate normal
+	VertexAttributes v0 = GetVertexAttributes(triangleIndex, float3(1,0,0));
+	VertexAttributes v1 = GetVertexAttributes(triangleIndex, float3(0,1,0));
+	VertexAttributes v2 = GetVertexAttributes(triangleIndex, float3(0,0,1));
+
+    // Create orthonormal basis
+    float3 T, B;
+    float3 N = normalize(barycentrics.x * v0.normal + barycentrics.y * v1.normal + barycentrics.z * v2.normal);
+    CreateCoordinateSystem(N, T, B);
+
+    // ***** REFLECT or DIFFUSE *****
+    if (shininess > 0)
+    {
+        // Reflect
+        float fuzz = saturate(1.0f - shininess / 100.0f);
+        float3 incidentDir = WorldRayDirection();
+        float3 reflectedDir = reflect(incidentDir, N);
+
+        // Fuzz
+        float3 nextDir = normalize(reflectedDir + fuzz * RandomUnitVector(payload.random));
+        
+        // Reject rays that go below the surface
+        if (dot(nextDir, N) <= 0.f)
+        {
+            nextDir = reflectedDir; // fall back to perfect reflection
+        }
+
+        // Fresnel (Schlick Approximation)
+        float cosTheta = saturate(dot(-incidentDir, N));
+        float3 F0 = color;
+        float3 F = F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+
+        payload.nextDir = nextDir;
+        payload.throughput *= F;
+    }
+    else
+    {
+        // Diffuse
+        // Sample hemisphere direction in tangent space
+        float3 sampleDir = SampleCosineWeightedHemisphere(payload.random);
+
+        // Transform sampleDir to world space coordinate system
+        float3 nextDir = normalize(sampleDir.x * T + sampleDir.y * B + sampleDir.z * N);
+
+        payload.nextDir = nextDir;
+        payload.throughput *= color; // Attenuation = albedo
+    }
+
+	// Write result to the payload
+    payload.ShadedColor = float3(0.f, 0.f, 0.f); // No emission
     payload.HitT = RayTCurrent();
 }

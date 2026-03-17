@@ -51,42 +51,52 @@ public:
 	}
 
 	// Generate famous RTOW scene
-	void BuildRandomScene(std::vector<Instance>& world_objs) {
+	void BuildRandomScene(std::vector<Instance>& world_objs, uint32_t hitgroup) {
+
 		uint32_t instanceID = 0;
-		uint32_t hitgroup = 0;
+
+		const float scale = 1.0f;
+		const float smallRadius = 0.2f * scale;
+		const float smallHeight = -0.8f * scale;
+		const float bigRadius = 1.0f * scale;
+		const float bigDistance = 2.5f * scale;
+		const float groundRadius = 1000.0f * scale;
+		const float groundHeight = -1001.0f * scale;
+		const float spread = 2.5f * scale;
+		const float nudge = -0.8f * scale;
+		const float collisionDist = 1.2f * scale;
+		const float gridMax = 11 * scale;
 
 		// Ground
 		Utils::CreateInstance(world_objs, 
-			DirectX::XMFLOAT3(0.0f, -1001.0f, 0.0f),
-			DirectX::XMFLOAT3(1000.0f, 1000.0f, 1000.0f),
+			DirectX::XMFLOAT3(0.0f, groundHeight, 0.0f),
+			DirectX::XMFLOAT3(groundRadius, groundRadius, groundRadius),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 			instanceID++, hitgroup);
 
 		// A bunch of random small instances
-		const float smallRadius = 0.2f;
-		for (int a = -11; a < 11; ++a) {
-			for (int b = -11; b < 11; ++b) {
+		for (int a = -gridMax; a < gridMax; ++a) {
+			for (int b = -gridMax; b < gridMax; ++b) {
 				float choose_mat = RandomFloat();
-				float centerX = a + 0.9f * RandomFloat();
-				float centerZ = b + 0.9f * RandomFloat();
+				float centerX = a + 0.9 * RandomFloat();
+				float centerZ = b + 0.9 * RandomFloat();
 
 				// Collision detection with three large instances
-				float smallY = -0.8f;
-				float dx1 = centerX - 0.0f, dz1 = centerZ - 0.0f;
-				float dist1 = std::sqrt(dx1*dx1 + (smallY-0.0f)*(smallY-0.0f));
-				if (dist1 < 1.2f) continue;  // 1.0 + 0.2
+				float dx1 = centerX, dz1 = centerZ;
+				float dist1 = std::sqrt(dx1*dx1 + (nudge)*(nudge));
+				if (dist1 < collisionDist) continue;
 
-				float dx2 = centerX + 2.5f, dz2 = centerZ - 0.0f;  
-				float dist2 = std::sqrt(dx2*dx2 + (smallY-0.0f)*(smallY-0.0f));
-				if (dist2 < 1.2f) continue;
+				float dx2 = centerX + spread, dz2 = centerZ;  
+				float dist2 = std::sqrt(dx2*dx2 + (nudge)*(nudge));
+				if (dist2 < collisionDist) continue;
 
-				float dx3 = centerX - 2.5f, dz3 = centerZ - 0.0f;
-				float dist3 = std::sqrt(dx3*dx3 + (smallY-0.0f)*(smallY-0.0f));
-				if (dist3 < 1.2f) continue;
+				float dx3 = centerX - spread, dz3 = centerZ;
+				float dist3 = std::sqrt(dx3*dx3 + (nudge)*(nudge));
+				if (dist3 < collisionDist) continue;
 
 				// Create small instance
 				Utils::CreateInstance(world_objs,
-					DirectX::XMFLOAT3(centerX, -0.8f, centerZ),
+					DirectX::XMFLOAT3(centerX, smallHeight, centerZ),
 					DirectX::XMFLOAT3(smallRadius, smallRadius, smallRadius),
 					DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 					instanceID++, hitgroup);
@@ -94,17 +104,16 @@ public:
 		}
 
 		// Three large instances
-		const float bigRadius = 1.0f;
 		Utils::CreateInstance(world_objs,
 			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
 		Utils::CreateInstance(world_objs,
-			DirectX::XMFLOAT3(-2.5f, 0.0f, 0.0f), 
+			DirectX::XMFLOAT3(-bigDistance, 0.0f, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
 		Utils::CreateInstance(world_objs,
-			DirectX::XMFLOAT3(2.5f, 0.0f, 0.0f), 
+			DirectX::XMFLOAT3(bigDistance, 0.0f, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
 	}
@@ -120,13 +129,13 @@ public:
 		d3d.vsync = config.vsync;
 
 		// Load a model
-		Utils::LoadModel(config.model, model, materials);
+		// Utils::LoadModel(config.model, model, materials);
 
 		// Create a sphere
-		// Utils::CreateSphere(1.0f, sphere, "colors.mtl", materials);
+		Utils::CreateSphere(1.0f, sphere, "colors.mtl", materials);
 
 		// Create the scene
-		BuildRandomScene(world_objs);
+		BuildRandomScene(world_objs, 1); // 0 = model, 1 = procedural sphere
 
 		// // Create Instance 0 of sphere (ground)
 		// Utils::CreateInstance(
@@ -198,20 +207,19 @@ public:
 		// Create common resources
 		D3DResources::Create_Descriptor_Heaps(d3d, resources);
 		D3DResources::Create_BackBuffer_RTV(d3d, resources);
-		D3DResources::Create_Vertex_Buffer(d3d, resources, model); // for models
-		D3DResources::Create_Index_Buffer(d3d, resources, model); // for models
+		// D3DResources::Create_Vertex_Buffer(d3d, resources, model); // for models
+		// D3DResources::Create_Index_Buffer(d3d, resources, model); // for models
 		D3DResources::Create_AABB_Buffer(d3d, resources, sphere);
-		D3DResources::Create_Texture(d3d, resources, materials[0]); // for models
+		// D3DResources::Create_Texture(d3d, resources, materials[0]); // for models
 		D3DResources::Create_View_CB(d3d, resources);
-		// D3DResources::Create_Material_CB(d3d, resources, materials);
 		D3DResources::Create_Material_Buffer(d3d, resources, materials);
 		
 		// Create DXR specific resources
-		DXR::Create_Bottom_Level_AS_Model(d3d, dxr, resources, model); // for models
-		//DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere);
+		// DXR::Create_Bottom_Level_AS_Model(d3d, dxr, resources, model); // for models
+		DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere); // for spheres
 		DXR::Create_Top_Level_AS(d3d, dxr, resources, world_objs);
 		DXR::Create_DXR_Output(d3d, resources);
-		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, model, materials);	
+		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, model, materials);
 		DXR::Create_RayGen_Program(d3d, dxr, shaderCompiler);
 		DXR::Create_Miss_Program(d3d, dxr, shaderCompiler);
 		DXR::Create_Closest_Hit_Program(d3d, dxr, shaderCompiler);

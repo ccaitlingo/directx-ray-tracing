@@ -10,7 +10,7 @@
                 "-width", "1920",
                 "-height", "1080",
                 "-vsync", "1",
-                "-model", ".\\models\\Sphere_Bot.obj"
+                "-model", ".\\models\\sphere.obj"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

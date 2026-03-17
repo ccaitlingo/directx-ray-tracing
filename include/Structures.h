@@ -72,6 +72,7 @@ struct Vertex
 {
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT2 uv;
+	DirectX::XMFLOAT3 normal;
 
 	bool operator==(const Vertex &v) const 
 	{
@@ -87,6 +88,7 @@ struct Vertex
 	{
 		position = v.position;
 		uv = v.uv;
+		normal = v.normal;
 		return *this;
 	}
 };
