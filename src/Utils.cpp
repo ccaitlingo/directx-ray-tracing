@@ -184,7 +184,7 @@ vector<char> ReadFile(const string &filename)
 // Scene Object Loading (Model & Sphere)
 //--------------------------------------------------------------------------------------
 
-void LoadModel(string filepath, Model &model, Material &material) 
+void LoadModel(string filepath, Model &model, std::vector<Material> &material_list) 
 {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -197,10 +197,22 @@ void LoadModel(string filepath, Model &model, Material &material)
 		throw std::runtime_error(err);
 	}
 
-	// Get the first material
-	// Only support a single material right now
-	material.name = materials[0].name;
-	material.texturePath = materials[0].diffuse_texname;
+	// Get materials
+	for (size_t i = 0; i < materials.size(); i++)
+	{
+		Material current_material = {};
+		current_material.name = materials[i].name;
+		current_material.texturePath = materials[i].diffuse_texname;
+		current_material.dissolve = materials[i].dissolve;
+		current_material.shininess = materials[i].shininess;
+		current_material.illum = materials[i].illum;
+		for (int j = 0; j < 3; j++)
+		{
+			current_material.ambient[j] = materials[i].ambient[j];
+			current_material.diffuse[j] = materials[i].diffuse[j];
+		}
+		material_list.push_back(current_material);
+	}
 
 	// Parse the model and store the unique vertices
 	unordered_map<Vertex, uint32_t> uniqueVertices = {};
@@ -238,7 +250,6 @@ void CreateSphere(float radius, Sphere &sphere, string filepath, std::vector<Mat
 {
 	std::vector<tinyobj::material_t> materials;
     std::map<std::string, int> matMap;
-    std::string warn;
     std::string err;
 
 	// Load the OBJ and MTL files
@@ -272,14 +283,13 @@ void CreateSphere(float radius, Sphere &sphere, string filepath, std::vector<Mat
 
 void CreateInstance(std::vector<Instance> &instance_list, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex)
 {
-	// TODO: Expand to more than just spheres
-	Instance sphere = {pos, scale, rot, {}, id, hitGroupIndex};
+	Instance new_instance = {pos, scale, rot, {}, id, hitGroupIndex};
 	
 	// Calculate the transform from position, scale, rotation
-	CalculateTransformMatrix(sphere);
+	CalculateTransformMatrix(new_instance);
 
 	// Add to instance list
-	instance_list.push_back(sphere);
+	instance_list.push_back(new_instance);
 }
 
 void CalculateTransformMatrix(Instance &instance)

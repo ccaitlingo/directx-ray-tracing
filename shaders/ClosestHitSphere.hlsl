@@ -20,8 +20,7 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
     // Early termination when a ray hits a light source
     if (illum > 0)
     {
-        payload.ShadedColor = color *illum;
-        payload.illum = illum;
+        payload.ShadedColor = color * illum;
         payload.throughput = float3(1.0f, 1.0f, 1.0f); // No attenuation
         return;
     }
@@ -64,20 +63,15 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
         // Diffuse
         // Sample hemisphere direction in tangent space
         float3 sampleDir = SampleCosineWeightedHemisphere(payload.random);
-        float3 nextDir = normalize(sampleDir.x * T + sampleDir.y * B + sampleDir.z * N);
 
         // Transform sampleDir to world space coordinate system
-        payload.nextDir = nextDir;
+        float3 nextDir = normalize(sampleDir.x * T + sampleDir.y * B + sampleDir.z * N);
 
-        // Update throughput by multiplying by color
-        payload.ShadedColor = float3(0,0,0);  // No emission
-        payload.throughput *= color;          // Attenuation = albedo
+        payload.nextDir = nextDir;
+        payload.throughput *= color; // Attenuation = albedo
     }
     
     // Write result to the payload
-    payload.ShadedColor = float3(0.f, 0.f, 0.f);
-    payload.illum       = illum;
-    payload.HitT        = RayTCurrent();
-    payload.HitNormal   = N;
-    payload.nextPos     = hitPos;
+    payload.ShadedColor = float3(0.f, 0.f, 0.f); // No emission
+    payload.HitT = RayTCurrent();
 }

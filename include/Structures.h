@@ -65,8 +65,7 @@ struct Instance
 	DirectX::XMFLOAT4 rotation;
 	FLOAT transform3x4[3][4];
 	UINT InstanceID : 24;
-	UINT hitGroupIndex : 3;
-	// which BLAS
+	UINT hitGroupIndex : 3; // model or sphere
 };
 
 struct Vertex

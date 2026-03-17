@@ -35,7 +35,7 @@ namespace Utils
 
 	std::vector<char> ReadFile(const std::string &filename);
 
-	void LoadModel(std::string filepath, Model &model, Material &material);
+	void LoadModel(std::string filepath, Model &model, std::vector<Material> &material_list);
 
 	void CreateSphere(float radius, Sphere &sphere, std::string filepath, std::vector<Material> &material);
 

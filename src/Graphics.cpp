@@ -71,6 +71,14 @@ void Create_Buffer(D3D12Global &d3d, D3D12BufferCreateInfo& info, ID3D12Resource
 }
 
 /**
+ * Create many textures.
+ */
+void Create_Textures(D3D12Global &d3d, D3D12Resources &resources, const std::vector<Material> &materials)
+{
+	// TODO
+}
+
+/**
 * Create a texture.
 */
 void Create_Texture(D3D12Global &d3d, D3D12Resources &resources, Material &material) 
@@ -932,7 +940,7 @@ void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resour
 	geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_PROCEDURAL_PRIMITIVE_AABBS;
 	geometryDesc.AABBs.AABBCount = 1;
 	geometryDesc.AABBs.AABBs.StartAddress = resources.aabbBuffer->GetGPUVirtualAddress();
-	geometryDesc.AABBs.AABBs.StrideInBytes = D3D12_RAYTRACING_AABB_BYTE_ALIGNMENT; // could be 0, since there's only one AABB in the buffer
+	geometryDesc.AABBs.AABBs.StrideInBytes = sizeof(D3D12_RAYTRACING_AABB); // could be 0, since there's only one AABB in the buffer
 	geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 	
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS buildFlags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
@@ -996,11 +1004,11 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	for (int i = 0; i < numInstances; i++)
 	{
 		instanceDesc[i].InstanceID = world_objs[i].InstanceID;
-		instanceDesc[i].InstanceContributionToHitGroupIndex = 1;
+		instanceDesc[i].InstanceContributionToHitGroupIndex = world_objs[i].hitGroupIndex;
 		instanceDesc[i].InstanceMask = 0xFF;
 		memcpy(instanceDesc[i].Transform, world_objs[i].transform3x4, sizeof(FLOAT) * 12);
 		instanceDesc[i].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
-		instanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+		instanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 	}
 
 	// Create the TLAS instance buffer
@@ -1294,7 +1302,7 @@ void Create_Pipeline_State_Object(D3D12Global &d3d, DXRGlobal &dxr)
 
 	// Add a state subobject for the shader payload configuration
 	D3D12_RAYTRACING_SHADER_CONFIG shaderDesc = {};
-	shaderDesc.MaxPayloadSizeInBytes = sizeof(XMFLOAT4) * 5;	// RGB,HitT,throughput,normal,nextPos,nextDir,random,padding
+	shaderDesc.MaxPayloadSizeInBytes = sizeof(XMFLOAT4) * 3;	// RGB,throughput,nextDir,random,HitT
 	shaderDesc.MaxAttributeSizeInBytes = D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES;
 
 	D3D12_STATE_SUBOBJECT shaderConfigObject = {};

@@ -58,15 +58,24 @@ void RayGen()
         int depth = 0;
 
         // Initialize the payload
-        HitInfo payload;
-        payload.ShadedColor = float3(0.f, 0.f, 0.f);
-        payload.HitT = 0.f;
-        payload.throughput = float3(1.0f, 1.0f, 1.0f);
-        payload.HitNormal = float3(0.f, 0.f, 0.f);
-        payload.nextPos = float3(0.f, 0.f, 0.f);
-        payload.nextDir = float3(0.f, 0.f, 0.f);
-        payload.random = float2(0.f, 0.f);
-        payload.illum = 0.f;
+        // HitInfo payload;
+        // payload.ShadedColor = float3(0.f, 0.f, 0.f);
+        // payload.HitT = 0.f;
+        // payload.throughput = float3(1.0f, 1.0f, 1.0f);
+        // payload.HitNormal = float3(0.f, 0.f, 0.f);
+        // payload.nextPos = float3(0.f, 0.f, 0.f);
+        // payload.nextDir = float3(0.f, 0.f, 0.f);
+        // payload.random = float2(0.f, 0.f);
+        // payload.illum = 0.f;
+
+        // Initialize the payload
+        HitInfo payload = {
+            float3(0.f, 0.f, 0.f), // ShadedColor
+            float3(1.f, 1.f, 1.f), // throughput
+            float3(0.f, 0.f, 0.f), // nextDir
+            float2(0.f, 0.f), // random
+            0.0f // HitT
+        };
 
 		// Initialized accumulated color
         float3 radiance = float3(0.f, 0.f, 0.f);
@@ -104,10 +113,10 @@ void RayGen()
             if (bounce == MAX_BOUNCES - 1) break;
 
             // Check for light sources
-            if (payload.HitT <= 0 || payload.illum > 0) break;
+            if (payload.HitT < 0.f || all(payload.ShadedColor > float3(0.f, 0.f, 0.f))) break;
             
             // Set up ray for next bounce
-            ray.Origin = payload.nextPos;
+            ray.Origin = ray.Origin + ray.Direction * payload.HitT;
             ray.Direction = payload.nextDir;
 
             depth++;

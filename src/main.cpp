@@ -51,17 +51,18 @@ public:
 	}
 
 	// Generate famous RTOW scene
-	void BuildRandomSpheresScene(std::vector<Instance>& world_objs) {
+	void BuildRandomScene(std::vector<Instance>& world_objs) {
 		uint32_t instanceID = 0;
+		uint32_t hitgroup = 0;
 
 		// Ground
 		Utils::CreateInstance(world_objs, 
 			DirectX::XMFLOAT3(0.0f, -1001.0f, 0.0f),
 			DirectX::XMFLOAT3(1000.0f, 1000.0f, 1000.0f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
-			instanceID++, 0);
+			instanceID++, hitgroup);
 
-		// A bunch of random small spheres
+		// A bunch of random small instances
 		const float smallRadius = 0.2f;
 		for (int a = -11; a < 11; ++a) {
 			for (int b = -11; b < 11; ++b) {
@@ -69,7 +70,7 @@ public:
 				float centerX = a + 0.9f * RandomFloat();
 				float centerZ = b + 0.9f * RandomFloat();
 
-				// Collision detection with three large spheres
+				// Collision detection with three large instances
 				float smallY = -0.8f;
 				float dx1 = centerX - 0.0f, dz1 = centerZ - 0.0f;
 				float dist1 = std::sqrt(dx1*dx1 + (smallY-0.0f)*(smallY-0.0f));
@@ -83,29 +84,29 @@ public:
 				float dist3 = std::sqrt(dx3*dx3 + (smallY-0.0f)*(smallY-0.0f));
 				if (dist3 < 1.2f) continue;
 
-				// Create small sphere
+				// Create small instance
 				Utils::CreateInstance(world_objs,
 					DirectX::XMFLOAT3(centerX, -0.8f, centerZ),
 					DirectX::XMFLOAT3(smallRadius, smallRadius, smallRadius),
 					DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
-					instanceID++, 0);
+					instanceID++, hitgroup);
 			}
 		}
 
-		// Three large spheres
+		// Three large instances
 		const float bigRadius = 1.0f;
 		Utils::CreateInstance(world_objs,
 			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
-			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, 0);
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
 		Utils::CreateInstance(world_objs,
 			DirectX::XMFLOAT3(-2.5f, 0.0f, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
-			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, 0);
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
 		Utils::CreateInstance(world_objs,
 			DirectX::XMFLOAT3(2.5f, 0.0f, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
-			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, 0);
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
 	}
 
 	void Init(ConfigInfo &config) 
@@ -119,13 +120,13 @@ public:
 		d3d.vsync = config.vsync;
 
 		// Load a model
-		// Utils::LoadModel(config.model, model, material);
+		Utils::LoadModel(config.model, model, materials);
 
 		// Create a sphere
-		Utils::CreateSphere(1.0f, sphere, "colors.mtl", materials);
+		// Utils::CreateSphere(1.0f, sphere, "colors.mtl", materials);
 
 		// Create the scene
-		BuildRandomSpheresScene(world_objs);
+		BuildRandomScene(world_objs);
 
 		// // Create Instance 0 of sphere (ground)
 		// Utils::CreateInstance(
@@ -143,7 +144,7 @@ public:
 		// 	DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	1,
-		// 	0
+		// 	1
 		// );
 		// // Create Instance 2 of sphere (right)
 		// Utils::CreateInstance(
@@ -152,7 +153,7 @@ public:
 		// 	DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	2,
-		// 	0
+		// 	1
 		// );
 		// // Create Instance 3 of sphere (left)
 		// Utils::CreateInstance(
@@ -161,7 +162,7 @@ public:
 		// 	DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	3,
-		// 	0
+		// 	1
 		// );
 		// // Create Instance 4 of sphere (small left)
 		// Utils::CreateInstance(
@@ -170,7 +171,7 @@ public:
 		// 	DirectX::XMFLOAT3(0.35f, 0.35f, 0.35f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	4,
-		// 	0
+		// 	1
 		// );
 		// // Create Instance 4 of sphere (small right)
 		// Utils::CreateInstance(
@@ -179,7 +180,7 @@ public:
 		// 	DirectX::XMFLOAT3(0.25f, 0.25f, 0.25f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	5,
-		// 	0
+		// 	1
 		// );
 
 		// Initialize the shader compiler
@@ -197,16 +198,17 @@ public:
 		// Create common resources
 		D3DResources::Create_Descriptor_Heaps(d3d, resources);
 		D3DResources::Create_BackBuffer_RTV(d3d, resources);
-		// D3DResources::Create_Vertex_Buffer(d3d, resources, model);
-		// D3DResources::Create_Index_Buffer(d3d, resources, model);
+		D3DResources::Create_Vertex_Buffer(d3d, resources, model); // for models
+		D3DResources::Create_Index_Buffer(d3d, resources, model); // for models
 		D3DResources::Create_AABB_Buffer(d3d, resources, sphere);
-		// D3DResources::Create_Texture(d3d, resources, material);
+		D3DResources::Create_Texture(d3d, resources, materials[0]); // for models
 		D3DResources::Create_View_CB(d3d, resources);
 		// D3DResources::Create_Material_CB(d3d, resources, materials);
 		D3DResources::Create_Material_Buffer(d3d, resources, materials);
 		
 		// Create DXR specific resources
-		DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere);
+		DXR::Create_Bottom_Level_AS_Model(d3d, dxr, resources, model); // for models
+		//DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere);
 		DXR::Create_Top_Level_AS(d3d, dxr, resources, world_objs);
 		DXR::Create_DXR_Output(d3d, resources);
 		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, model, materials);	

@@ -5,12 +5,12 @@
             "name": "Launch DXR (MSVC)",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/IntroToDXR.exe",
+            "program": "${workspaceFolder}/bin/IntroToDXR_v6.exe",
             "args": [
                 "-width", "1920",
                 "-height", "1080",
                 "-vsync", "1",
-                "-model", ".\\models\\cinema.obj"
+                "-model", ".\\models\\Sphere_Bot.obj"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

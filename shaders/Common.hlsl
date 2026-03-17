@@ -37,14 +37,10 @@
 
 struct HitInfo {
     float3 ShadedColor;
-    float HitT;
     float3 throughput;
-    float3 HitNormal;
-    float3 nextPos;
 	float3 nextDir;
     float2 random;
-    float illum;
-    float padding;
+    float HitT;
 };
 
 struct TriangleAttributes 
