@@ -1,7 +1,0 @@
-newmtl Sphere_Bot
-    Ka 1.0000 1.0000 1.0000
-    Kd 0.6400 0.6400 0.6400
-    d 1
-    Ns 96
-    illum 0
-    map_Kd -texres 4096 textures\Sphere_Bot.jpg
