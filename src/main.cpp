@@ -53,11 +53,11 @@ public:
 	// Generate famous RTOW scene
 	void BuildRandomScene(std::vector<Instance>& world_objs, uint32_t hitgroup) {
 
-		uint32_t instanceID = 0;
+		uint32_t instanceID = world_objs.size();
 
 		const float scale = 1.0f;
 		const float smallRadius = 0.2f * scale;
-		const float smallHeight = -0.8f * scale;
+		const float smallHeight = -0.1f * scale;
 		const float bigRadius = 1.0f * scale;
 		const float bigDistance = 2.5f * scale;
 		const float groundRadius = 1000.0f * scale;
@@ -67,12 +67,24 @@ public:
 		const float collisionDist = 1.2f * scale;
 		const float gridMax = 11 * scale;
 
+		// const float scale = 1.0f;
+		// const float smallRadius = 0.2f * scale;
+		// const float smallHeight = -0.8f * scale;
+		// const float bigRadius = 1.0f * scale;
+		// const float bigDistance = 2.5f * scale;
+		// const float groundRadius = 1000.0f * scale;
+		// const float groundHeight = -1001.0f * scale;
+		// const float spread = 2.5f * scale;
+		// const float nudge = -0.8f * scale;
+		// const float collisionDist = 1.2f * scale;
+		// const float gridMax = 11 * scale;
+
 		// Ground
-		Utils::CreateInstance(world_objs, 
-			DirectX::XMFLOAT3(0.0f, groundHeight, 0.0f),
-			DirectX::XMFLOAT3(groundRadius, groundRadius, groundRadius),
-			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
-			instanceID++, hitgroup);
+		// Utils::CreateInstance(world_objs, 
+		// 	DirectX::XMFLOAT3(0.0f, groundHeight, 0.0f),
+		// 	DirectX::XMFLOAT3(groundRadius, groundRadius, groundRadius),
+		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
+		// 	instanceID++, hitgroup);
 
 		// A bunch of random small instances
 		for (int a = -gridMax; a < gridMax; ++a) {
@@ -128,14 +140,24 @@ public:
 		d3d.height = config.height;
 		d3d.vsync = config.vsync;
 
+		// Load plane model
+		Utils::LoadModel("./models/plane.obj", plane, materials);
+
 		// Load a model
-		// Utils::LoadModel(config.model, model, materials);
+		Utils::LoadModel("./models/sphere.obj", model, materials);
 
 		// Create a sphere
-		Utils::CreateSphere(1.0f, sphere, "colors.mtl", materials);
+		// Utils::CreateSphere(1.0f, sphere, "colors.mtl", materials);
+
+		// Instance of a plane
+		Utils::CreateInstance(world_objs, 
+			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
+			0, 0);
 
 		// Create the scene
-		BuildRandomScene(world_objs, 1); // 0 = model, 1 = procedural sphere
+		BuildRandomScene(world_objs, 0); // 0 = model, 1 = procedural sphere
 
 		// // Create Instance 0 of sphere (ground)
 		// Utils::CreateInstance(
@@ -207,16 +229,19 @@ public:
 		// Create common resources
 		D3DResources::Create_Descriptor_Heaps(d3d, resources);
 		D3DResources::Create_BackBuffer_RTV(d3d, resources);
-		// D3DResources::Create_Vertex_Buffer(d3d, resources, model); // for models
-		// D3DResources::Create_Index_Buffer(d3d, resources, model); // for models
+		D3DResources::Create_Plane_Vertex_Buffer(d3d, resources, plane);
+		D3DResources::Create_Plane_Index_Buffer(d3d, resources, plane);
+		D3DResources::Create_Vertex_Buffer(d3d, resources, model); // for models
+		D3DResources::Create_Index_Buffer(d3d, resources, model); // for models
 		D3DResources::Create_AABB_Buffer(d3d, resources, sphere);
-		// D3DResources::Create_Texture(d3d, resources, materials[0]); // for models
+		//D3DResources::Create_Texture(d3d, resources, materials[0]); // TODO: support multiple models/instances
 		D3DResources::Create_View_CB(d3d, resources);
 		D3DResources::Create_Material_Buffer(d3d, resources, materials);
 		
 		// Create DXR specific resources
-		// DXR::Create_Bottom_Level_AS_Model(d3d, dxr, resources, model); // for models
-		DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere); // for spheres
+		DXR::Create_Bottom_Level_AS_Plane(d3d, dxr, resources, plane);
+		DXR::Create_Bottom_Level_AS_Model(d3d, dxr, resources, model); // for models
+		//DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere); // for spheres
 		DXR::Create_Top_Level_AS(d3d, dxr, resources, world_objs);
 		DXR::Create_DXR_Output(d3d, resources);
 		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, model, materials);
@@ -264,6 +289,7 @@ public:
 private:
 	HWND window;
 	Model model;
+	Model plane;
 	Sphere sphere;
 	// Material material;
 	std::vector<Material> materials;

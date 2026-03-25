@@ -261,6 +261,88 @@ void Create_AABB_Buffer(D3D12Global &d3d, D3D12Resources &resources, Sphere &sph
 }
 
 /*
+* Create the plane vertex buffer.
+*/
+void Create_Plane_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, Model &model) 
+{
+	/*
+	// Hard coded ground plane
+	std::vector<Vertex> planeVerts(4);
+
+	// Bottom-left
+	planeVerts[0].position = {-5.f, 0.f, -5.f};
+	planeVerts[0].uv       = {0.f, 1.f};
+	planeVerts[0].normal   = {0.f, 1.f, 0.f};
+
+	// Bottom-right
+	planeVerts[1].position = {5.f, 0.f, -5.f};
+	planeVerts[1].uv       = {1.f, 1.f};
+	planeVerts[1].normal   = {0.f, 1.f, 0.f};
+
+	// Top-right
+	planeVerts[2].position = {5.f, 0.f, 5.f};
+	planeVerts[2].uv       = {1.f, 0.f};
+	planeVerts[2].normal   = {0.f, 1.f, 0.f};
+
+	// Top-left
+	planeVerts[3].position = {-5.f, 0.f, 5.f};
+	planeVerts[3].uv       = {0.f, 0.f};
+	planeVerts[3].normal   = {0.f, 1.f, 0.f};
+	*/
+
+	// Create the plane vertex buffer resource
+	D3D12BufferCreateInfo info(((UINT)model.vertices.size() * sizeof(Vertex)), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+	Create_Buffer(d3d, info, &resources.planeVertexBuffer);
+#if NAME_D3D_RESOURCES
+	resources.planeVertexBuffer->SetName(L"Plane Vertex Buffer");
+#endif
+
+	// Copy the plane vertex data to the buffer
+	UINT8* pVertexDataBegin;
+	D3D12_RANGE readRange = {};
+	HRESULT hr = resources.planeVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
+	Utils::Validate(hr, L"Error: failed to map plane vertex buffer!");
+
+	memcpy(pVertexDataBegin, model.vertices.data(), info.size);
+	resources.planeVertexBuffer->Unmap(0, nullptr);
+
+	// Initialize the vertex buffer view
+	resources.planeVertexBufferView.BufferLocation = resources.planeVertexBuffer->GetGPUVirtualAddress();
+	resources.planeVertexBufferView.StrideInBytes = sizeof(Vertex);
+	resources.planeVertexBufferView.SizeInBytes = static_cast<UINT>(info.size);
+}
+
+/**
+* Create the plane index buffer.
+*/
+void Create_Plane_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, Model &model) 
+{
+	// Hard coded ground plane
+	std::vector<uint32_t> planeIndices = { 0,1,2, 0,2,3 };
+
+	// Create the index buffer resource
+	D3D12BufferCreateInfo info((UINT)model.indices.size() * sizeof(UINT), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+	Create_Buffer(d3d, info, &resources.planeIndexBuffer);
+#if NAME_D3D_RESOURCES
+	resources.planeIndexBuffer->SetName(L"Plane Index Buffer");
+#endif
+
+	// Copy the index data to the index buffer
+	UINT8* pIndexDataBegin;
+	D3D12_RANGE readRange = {};
+	HRESULT hr = resources.planeIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin));
+	Utils::Validate(hr, L"Error: failed to map plane index buffer!");
+
+	memcpy(pIndexDataBegin, model.indices.data(), info.size);
+	resources.planeIndexBuffer->Unmap(0, nullptr);
+
+	// Initialize the index buffer view
+	resources.planeIndexBufferView.BufferLocation = resources.planeIndexBuffer->GetGPUVirtualAddress();
+	resources.planeIndexBufferView.SizeInBytes = static_cast<UINT>(info.size);
+	resources.planeIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+}
+
+/*
 * Create a constant buffer.
 */
 void Create_Constant_Buffer(D3D12Global &d3d, ID3D12Resource** buffer, UINT64 size) 
@@ -451,6 +533,8 @@ void Destroy(D3D12Resources &resources)
 	SAFE_RELEASE(resources.vertexBuffer);
 	SAFE_RELEASE(resources.indexBuffer);
 	SAFE_RELEASE(resources.aabbBuffer);
+	SAFE_RELEASE(resources.planeVertexBuffer);
+	SAFE_RELEASE(resources.planeIndexBuffer);
 	SAFE_RELEASE(resources.materialBuffer);
 	SAFE_RELEASE(resources.viewCB);
 	// SAFE_RELEASE(resources.materialCB);
@@ -991,17 +1075,99 @@ void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resour
 	d3d.cmdList->ResourceBarrier(1, &uavBarrier);
 }
 
+/*
+* Create the bottom level acceleration structure out of a plane (Note: the plane is made of 2 triangles).
+*/
+void Create_Bottom_Level_AS_Plane(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, Model &model)
+{
+    // Describe the geometry that goes in the bottom acceleration structure(s)
+    D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
+    geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+    geometryDesc.Triangles.VertexBuffer.StartAddress = resources.planeVertexBuffer->GetGPUVirtualAddress();
+    geometryDesc.Triangles.VertexBuffer.StrideInBytes = resources.planeVertexBufferView.StrideInBytes;
+    geometryDesc.Triangles.VertexCount = static_cast<UINT>(model.vertices.size());
+    geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+    geometryDesc.Triangles.IndexBuffer = resources.planeIndexBuffer->GetGPUVirtualAddress();
+	geometryDesc.Triangles.IndexFormat = resources.planeIndexBufferView.Format;
+	geometryDesc.Triangles.IndexCount  = static_cast<UINT>(model.indices.size());
+	geometryDesc.Triangles.Transform3x4 = 0;
+	geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS buildFlags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+
+    // Get the size requirements for the BLAS buffers
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS ASInputs = {};
+    ASInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+    ASInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+    ASInputs.pGeometryDescs = &geometryDesc;
+    ASInputs.NumDescs = 1;
+    ASInputs.Flags = buildFlags;
+
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO ASPreBuildInfo = {};
+    d3d.device->GetRaytracingAccelerationStructurePrebuildInfo(&ASInputs, &ASPreBuildInfo);
+
+    ASPreBuildInfo.ScratchDataSizeInBytes = ALIGN(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ASPreBuildInfo.ScratchDataSizeInBytes);
+    ASPreBuildInfo.ResultDataMaxSizeInBytes = ALIGN(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ASPreBuildInfo.ResultDataMaxSizeInBytes);
+
+    // Create the BLAS scratch buffer
+	D3D12BufferCreateInfo bufferInfo(ASPreBuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	bufferInfo.alignment = max(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
+	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.planeBLAS.pScratch);
+#if NAME_D3D_RESOURCES
+	dxr.planeBLAS.pScratch->SetName(L"DXR Plane BLAS Scratch for Model");
+#endif
+
+	// Create the BLAS buffer
+	bufferInfo.size = ASPreBuildInfo.ResultDataMaxSizeInBytes;
+	bufferInfo.state = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
+	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.planeBLAS.pResult);
+#if NAME_D3D_RESOURCES
+	dxr.planeBLAS.pResult->SetName(L"DXR BLAS for Model");
+#endif
+
+	// Describe and build the bottom level acceleration structure
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
+	buildDesc.Inputs = ASInputs;	
+	buildDesc.ScratchAccelerationStructureData = dxr.planeBLAS.pScratch->GetGPUVirtualAddress();
+	buildDesc.DestAccelerationStructureData = dxr.planeBLAS.pResult->GetGPUVirtualAddress();
+
+	d3d.cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
+
+	// Wait for the BLAS build to complete
+	D3D12_RESOURCE_BARRIER uavBarrier;
+	uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+	uavBarrier.UAV.pResource = dxr.planeBLAS.pResult;
+	uavBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	d3d.cmdList->ResourceBarrier(1, &uavBarrier);
+}
+
 /**
 * Create the top level acceleration structure and its associated buffers.
 */
 void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, std::vector<Instance> &world_objs) 
 {
 	// Describe the TLAS geometry instance(s)
-	UINT numInstances = static_cast<UINT>(world_objs.size());
+	UINT numInstances = static_cast<UINT>(world_objs.size()) + 1; // +1 for ground plane
 	std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instanceDesc(numInstances);
 
+	// Ground plane
+	instanceDesc[0].InstanceID = 0;
+	instanceDesc[0].InstanceContributionToHitGroupIndex = 0; // triangle
+	instanceDesc[0].InstanceMask = 0xFF;
+	memcpy(instanceDesc[0].Transform, world_objs[0].transform3x4, sizeof(FLOAT) * 12);
+	instanceDesc[0].AccelerationStructure = dxr.planeBLAS.pResult->GetGPUVirtualAddress();
+	instanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+
+	// Model
+	// instanceDesc[1].InstanceID = 1;
+	// instanceDesc[1].InstanceContributionToHitGroupIndex = 0; // triangle
+	// instanceDesc[1].InstanceMask = 0xFF;
+	// memcpy(instanceDesc[1].Transform, world_objs[1].transform3x4, sizeof(FLOAT) * 12);
+	// instanceDesc[1].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
+	// instanceDesc[1].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+
 	// Loop through the instances
-	for (int i = 0; i < numInstances; i++)
+	for (int i = 1; i < numInstances; i++)
 	{
 		instanceDesc[i].InstanceID = world_objs[i].InstanceID;
 		instanceDesc[i].InstanceContributionToHitGroupIndex = world_objs[i].hitGroupIndex;
@@ -1106,7 +1272,7 @@ void Create_RayGen_Program(D3D12Global &d3d, DXRGlobal &dxr, D3D12ShaderCompiler
 	ranges[1].OffsetInDescriptorsFromTableStart = 1;
 
 	ranges[2].BaseShaderRegister = 0;
-	ranges[2].NumDescriptors = 5;
+	ranges[2].NumDescriptors = 7;
 	ranges[2].RegisterSpace = 0;
 	ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	ranges[2].OffsetInDescriptorsFromTableStart = 2;
@@ -1458,17 +1624,19 @@ void Create_Shader_Table(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, const Model &model, const std::vector<Material> &materials)
 {
 	// Describe the CBV/SRV/UAV heap
-	// Need 7 entries:
+	// Need 9 entries:
 	// 1 CBV for the ViewCB
 	// --Deprecated-- 1 CBV for the MaterialCB
 	// 1 UAV for the RT output
 	// 1 SRV for the Scene BVH
 	// 1 SRV for the index buffer
 	// 1 SRV for the vertex buffer
+	// 1 SRV for the plane index buffer
+	// 1 SRV for the plane vertex buffer
 	// 1 SRV for the texture
 	// 1 SRV for the materials
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors = 7;
+	desc.NumDescriptors = 9;
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
@@ -1539,6 +1707,32 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 
 	handle.ptr += handleIncrement;
 	d3d.device->CreateShaderResourceView(resources.vertexBuffer, &vertexSRVDesc, handle);
+
+	// Create the plane index buffer SRV
+	D3D12_SHADER_RESOURCE_VIEW_DESC planeIndexSRVDesc;
+	planeIndexSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	planeIndexSRVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	planeIndexSRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+	planeIndexSRVDesc.Buffer.StructureByteStride = 0;
+	planeIndexSRVDesc.Buffer.FirstElement = 0;
+	planeIndexSRVDesc.Buffer.NumElements = (6 * sizeof(UINT)) / sizeof(float);
+	planeIndexSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+	handle.ptr += handleIncrement;
+	d3d.device->CreateShaderResourceView(resources.planeIndexBuffer, &planeIndexSRVDesc, handle);
+
+	// Create the plane vertex buffer SRV
+	D3D12_SHADER_RESOURCE_VIEW_DESC planeVertexSRVDesc;
+	planeVertexSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	planeVertexSRVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	planeVertexSRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+	planeVertexSRVDesc.Buffer.StructureByteStride = 0;
+	planeVertexSRVDesc.Buffer.FirstElement = 0;
+	planeVertexSRVDesc.Buffer.NumElements = (4 * sizeof(Vertex)) / sizeof(float);
+	planeVertexSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+	handle.ptr += handleIncrement;
+	d3d.device->CreateShaderResourceView(resources.planeVertexBuffer, &planeVertexSRVDesc, handle);
 
 	// Create the material texture SRV
 	D3D12_SHADER_RESOURCE_VIEW_DESC textureSRVDesc = {};
@@ -1631,7 +1825,7 @@ void Build_Command_List(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resour
 	desc.MissShaderTable.StrideInBytes = dxr.shaderTableRecordSize;
 
 	desc.HitGroupTable.StartAddress = dxr.shaderTable->GetGPUVirtualAddress() + (dxr.shaderTableRecordSize * 2);
-	desc.HitGroupTable.SizeInBytes = dxr.shaderTableRecordSize;			// Only a single Hit program entry
+	desc.HitGroupTable.SizeInBytes = dxr.shaderTableRecordSize * 2;			// 2 Hit program entries
 	desc.HitGroupTable.StrideInBytes = dxr.shaderTableRecordSize;
 
 	desc.Width = d3d.width;
@@ -1674,6 +1868,9 @@ void Destroy(DXRGlobal &dxr)
 	SAFE_RELEASE(dxr.BLAS.pScratch);
 	SAFE_RELEASE(dxr.BLAS.pResult);
 	SAFE_RELEASE(dxr.BLAS.pInstanceDesc);
+	SAFE_RELEASE(dxr.planeBLAS.pScratch);
+	SAFE_RELEASE(dxr.planeBLAS.pResult);
+	SAFE_RELEASE(dxr.planeBLAS.pInstanceDesc);
 	SAFE_RELEASE(dxr.shaderTable);
 	SAFE_RELEASE(dxr.rgs.blob);
 	SAFE_RELEASE(dxr.rgs.pRootSignature);

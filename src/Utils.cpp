@@ -40,6 +40,8 @@
 #include <shellapi.h>
 #include <unordered_map>
 
+#include <iostream> // TODO: remove. for debugging only.
+
 namespace std
 {
 	void hash_combine(size_t &seed, size_t hash)

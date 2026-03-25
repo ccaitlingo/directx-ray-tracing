@@ -216,6 +216,11 @@ struct D3D12Resources
 	D3D12_RAYTRACING_AABB							aabbData;
 	UINT8*											aabbBufferStart = nullptr;
 
+	ID3D12Resource*									planeVertexBuffer = nullptr;
+	D3D12_VERTEX_BUFFER_VIEW						planeVertexBufferView;
+	ID3D12Resource*									planeIndexBuffer = nullptr;
+	D3D12_INDEX_BUFFER_VIEW							planeIndexBufferView;
+
 	ID3D12Resource*									viewCB = nullptr;
 	ViewCB											viewCBData;
 	UINT8*											viewCBStart = nullptr;
@@ -350,6 +355,7 @@ struct DXRGlobal
 {
 	AccelerationStructureBuffer						TLAS;
 	AccelerationStructureBuffer						BLAS;
+	AccelerationStructureBuffer						planeBLAS;
 	uint64_t										tlasSize;
 
 	ID3D12Resource*									shaderTable = nullptr;

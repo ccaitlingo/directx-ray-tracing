@@ -7,7 +7,7 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
 {
     // Get instance ID and material
     uint instanceID = InstanceID();
-    uint matIndex = instanceID == 0 ? 0 : ((instanceID - 1u) % 5u) + 1u; // Except ground, map to 1-5
+    uint matIndex = instanceID == 0 ? 0 : ((instanceID - 1u) % 6u) + 1u; // Except ground, map to 1-6
     MaterialCB material = materials[matIndex];
 
     // Material

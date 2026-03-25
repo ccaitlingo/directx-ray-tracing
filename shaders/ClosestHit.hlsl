@@ -5,10 +5,10 @@
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
 {
-	// Get primitive index, instance ID, and material
+    // Get primitive index, instance ID, and material
 	uint triangleIndex = PrimitiveIndex();
     uint instanceID = InstanceID();
-    uint matIndex = instanceID == 0 ? 0 : ((instanceID - 1u) % 5u) + 1u; // Except ground, map to 1-5
+    uint matIndex = instanceID == 0 ? 0 : ((instanceID - 1u) % 6u) + 1u; // Except ground, map to 1-6
     MaterialCB material = materials[matIndex];
 
 	// Material
@@ -22,7 +22,7 @@ void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
 	float3 barycentrics = float3((1.0f - attrib.uv.x - attrib.uv.y), attrib.uv.x, attrib.uv.y);
 
 	// Get the base color from the texture
-	VertexAttributes vertex = GetVertexAttributes(triangleIndex, barycentrics);
+	VertexAttributes vertex = GetVertexAttributes(triangleIndex, barycentrics, instanceID);
 	int2 coord = floor(vertex.uv * material.textureResolution.x);
 	// float3 color = albedo.Load(int3(coord, 0)).rgb;
 
@@ -38,9 +38,9 @@ void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 
 	// Prepare to calculate normal
-	VertexAttributes v0 = GetVertexAttributes(triangleIndex, float3(1,0,0));
-	VertexAttributes v1 = GetVertexAttributes(triangleIndex, float3(0,1,0));
-	VertexAttributes v2 = GetVertexAttributes(triangleIndex, float3(0,0,1));
+	VertexAttributes v0 = GetVertexAttributes(triangleIndex, float3(1,0,0), instanceID);
+	VertexAttributes v1 = GetVertexAttributes(triangleIndex, float3(0,1,0), instanceID);
+	VertexAttributes v2 = GetVertexAttributes(triangleIndex, float3(0,0,1), instanceID);
 
     // Create orthonormal basis
     float3 T, B;
