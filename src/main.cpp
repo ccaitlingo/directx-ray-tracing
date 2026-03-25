@@ -51,9 +51,10 @@ public:
 	}
 
 	// Generate famous RTOW scene
-	void BuildRandomScene(std::vector<Instance>& world_objs, uint32_t hitgroup) {
+	void BuildRandomScene(std::vector<WorldObject>& world_objs, WorldObject world_object) {
 
 		uint32_t instanceID = world_objs.size();
+		uint32_t hitgroup = std::holds_alternative<Model>(world_object.object) ? 0 : 1;
 
 		const float scale = 1.0f;
 		const float smallRadius = 0.2f * scale;
@@ -80,7 +81,7 @@ public:
 		// const float gridMax = 11 * scale;
 
 		// Ground
-		// Utils::CreateInstance(world_objs, 
+		// Utils::CreateInstance(world_object, 
 		// 	DirectX::XMFLOAT3(0.0f, groundHeight, 0.0f),
 		// 	DirectX::XMFLOAT3(groundRadius, groundRadius, groundRadius),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
@@ -107,7 +108,7 @@ public:
 				if (dist3 < collisionDist) continue;
 
 				// Create small instance
-				Utils::CreateInstance(world_objs,
+				Utils::CreateInstance(world_object,
 					DirectX::XMFLOAT3(centerX, smallHeight, centerZ),
 					DirectX::XMFLOAT3(smallRadius, smallRadius, smallRadius),
 					DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
@@ -116,15 +117,15 @@ public:
 		}
 
 		// Three large instances
-		Utils::CreateInstance(world_objs,
+		Utils::CreateInstance(world_object,
 			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
-		Utils::CreateInstance(world_objs,
+		Utils::CreateInstance(world_object,
 			DirectX::XMFLOAT3(-bigDistance, 0.0f, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
-		Utils::CreateInstance(world_objs,
+		Utils::CreateInstance(world_object,
 			DirectX::XMFLOAT3(bigDistance, 0.0f, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
@@ -141,23 +142,26 @@ public:
 		d3d.vsync = config.vsync;
 
 		// Load plane model
-		Utils::LoadModel("./models/plane.obj", plane, materials);
+		plane.object = Utils::LoadModel("./models/plane.obj", materials);
+		world_objs.push_back(plane);
 
 		// Load a model
-		Utils::LoadModel("./models/sphere.obj", model, materials);
+		model.object = Utils::LoadModel("./models/sphere.obj", materials);
+		world_objs.push_back(model);
 
 		// Create a sphere
-		// Utils::CreateSphere(1.0f, sphere, "colors.mtl", materials);
+		sphere.object = Utils::CreateSphere(1.0f, "colors.mtl", materials);
+		world_objs.push_back(sphere);
 
 		// Instance of a plane
-		Utils::CreateInstance(world_objs, 
+		Utils::CreateInstance(plane, 
 			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 			0, 0);
 
 		// Create the scene
-		BuildRandomScene(world_objs, 0); // 0 = model, 1 = procedural sphere
+		BuildRandomScene(world_objs, sphere); // 0 = model, 1 = procedural sphere
 
 		// // Create Instance 0 of sphere (ground)
 		// Utils::CreateInstance(
@@ -288,12 +292,11 @@ public:
 	
 private:
 	HWND window;
-	Model model;
-	Model plane;
-	Sphere sphere;
-	// Material material;
+	WorldObject model;
+	WorldObject plane;
+	WorldObject sphere;
 	std::vector<Material> materials;
-	std::vector<Instance> world_objs;
+	std::vector<WorldObject> world_objs;
 
 	DXRGlobal dxr = {};
 	D3D12Global d3d = {};

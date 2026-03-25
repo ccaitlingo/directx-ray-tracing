@@ -42,6 +42,7 @@
 
 #include <string>
 #include <vector>
+#include <variant>
 
 //--------------------------------------------------------------------------------------
 // Macro Defines

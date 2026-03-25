@@ -35,12 +35,12 @@ namespace Utils
 
 	std::vector<char> ReadFile(const std::string &filename);
 
-	void LoadModel(std::string filepath, Model &model, std::vector<Material> &material_list);
+	Model LoadModel(std::string filepath, std::vector<Material> &material_list);
 
-	void CreateSphere(float radius, Sphere &sphere, std::string filepath, std::vector<Material> &material);
+	Sphere CreateSphere(float radius, std::string filepath, std::vector<Material> &material);
 
-	void CreateInstance(std::vector<Instance> &instance_list, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rotation, UINT id, UINT hitGroupIndex);
-	
+	void CreateInstance(WorldObject object, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex);
+
 	void CalculateTransformMatrix(Instance &instance);
 
 	void Validate(HRESULT hr, LPWSTR message);

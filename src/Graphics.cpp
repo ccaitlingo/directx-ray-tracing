@@ -951,7 +951,7 @@ namespace DXR
 /**
 * Create the bottom level acceleration structure out of triangles.
 */
-void Create_Bottom_Level_AS_Model(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, Model &model) 
+void Create_Bottom_Level_AS_Model(D3D12Global &d3d, D3D12Resources &resources, WorldObject &world_object, Model &model) 
 {
 	// Describe the geometry that goes in the bottom acceleration structure(s)
 	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc;
@@ -985,31 +985,31 @@ void Create_Bottom_Level_AS_Model(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resourc
 	// Create the BLAS scratch buffer
 	D3D12BufferCreateInfo bufferInfo(ASPreBuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	bufferInfo.alignment = max(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
-	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.BLAS.pScratch);
+	D3DResources::Create_Buffer(d3d, bufferInfo, &world_object.BLAS.pScratch);
 #if NAME_D3D_RESOURCES
-	dxr.BLAS.pScratch->SetName(L"DXR BLAS Scratch for Model");
+	world_object.BLAS.pScratch->SetName(L"DXR BLAS Scratch for Model");
 #endif
 
 	// Create the BLAS buffer
 	bufferInfo.size = ASPreBuildInfo.ResultDataMaxSizeInBytes;
 	bufferInfo.state = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.BLAS.pResult);
+	D3DResources::Create_Buffer(d3d, bufferInfo, &world_object.BLAS.pResult);
 #if NAME_D3D_RESOURCES
-	dxr.BLAS.pResult->SetName(L"DXR BLAS for Model");
+	world_object.BLAS.pResult->SetName(L"DXR BLAS for Model");
 #endif
 
 	// Describe and build the bottom level acceleration structure
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
 	buildDesc.Inputs = ASInputs;	
-	buildDesc.ScratchAccelerationStructureData = dxr.BLAS.pScratch->GetGPUVirtualAddress();
-	buildDesc.DestAccelerationStructureData = dxr.BLAS.pResult->GetGPUVirtualAddress();
+	buildDesc.ScratchAccelerationStructureData = world_object.BLAS.pScratch->GetGPUVirtualAddress();
+	buildDesc.DestAccelerationStructureData = world_object.BLAS.pResult->GetGPUVirtualAddress();
 
 	d3d.cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 
 	// Wait for the BLAS build to complete
 	D3D12_RESOURCE_BARRIER uavBarrier;
 	uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-	uavBarrier.UAV.pResource = dxr.BLAS.pResult;
+	uavBarrier.UAV.pResource = world_object.BLAS.pResult;
 	uavBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 	d3d.cmdList->ResourceBarrier(1, &uavBarrier);
 }
@@ -1017,7 +1017,7 @@ void Create_Bottom_Level_AS_Model(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resourc
 /**
 * Create the bottom level acceleration structure out of spheres.
 */
-void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, Sphere &sphere) 
+void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, D3D12Resources &resources, WorldObject &world_object, Sphere &sphere) 
 {
 	// Describe the geometry that goes in the bottom acceleration structure(s)
 	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc;
@@ -1046,31 +1046,31 @@ void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resour
 	// Create the BLAS scratch buffer
 	D3D12BufferCreateInfo bufferInfo(ASPreBuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	bufferInfo.alignment = max(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
-	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.BLAS.pScratch);
+	D3DResources::Create_Buffer(d3d, bufferInfo, &world_object.BLAS.pScratch);
 #if NAME_D3D_RESOURCES
-	dxr.BLAS.pScratch->SetName(L"DXR BLAS Scratch for Sphere");
+	world_object.BLAS.pScratch->SetName(L"DXR BLAS Scratch for Sphere");
 #endif
 
 	// Create the BLAS buffer
 	bufferInfo.size = ASPreBuildInfo.ResultDataMaxSizeInBytes;
 	bufferInfo.state = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.BLAS.pResult);
+	D3DResources::Create_Buffer(d3d, bufferInfo, &world_object.BLAS.pResult);
 #if NAME_D3D_RESOURCES
-	dxr.BLAS.pResult->SetName(L"DXR BLAS for Sphere");
+	world_object.BLAS.pResult->SetName(L"DXR BLAS for Sphere");
 #endif
 
 	// Describe and build the bottom level acceleration structure
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
 	buildDesc.Inputs = ASInputs;	
-	buildDesc.ScratchAccelerationStructureData = dxr.BLAS.pScratch->GetGPUVirtualAddress();
-	buildDesc.DestAccelerationStructureData = dxr.BLAS.pResult->GetGPUVirtualAddress();
+	buildDesc.ScratchAccelerationStructureData = world_object.BLAS.pScratch->GetGPUVirtualAddress();
+	buildDesc.DestAccelerationStructureData = world_object.BLAS.pResult->GetGPUVirtualAddress();
 
 	d3d.cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 
 	// Wait for the BLAS build to complete
 	D3D12_RESOURCE_BARRIER uavBarrier;
 	uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-	uavBarrier.UAV.pResource = dxr.BLAS.pResult;
+	uavBarrier.UAV.pResource = world_object.BLAS.pResult;
 	uavBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 	d3d.cmdList->ResourceBarrier(1, &uavBarrier);
 }
@@ -1078,7 +1078,7 @@ void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resour
 /*
 * Create the bottom level acceleration structure out of a plane (Note: the plane is made of 2 triangles).
 */
-void Create_Bottom_Level_AS_Plane(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, Model &model)
+void Create_Bottom_Level_AS_Plane(D3D12Global &d3d, D3D12Resources &resources, WorldObject &world_object, Model &model)
 {
     // Describe the geometry that goes in the bottom acceleration structure(s)
     D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
@@ -1112,31 +1112,31 @@ void Create_Bottom_Level_AS_Plane(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resourc
     // Create the BLAS scratch buffer
 	D3D12BufferCreateInfo bufferInfo(ASPreBuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	bufferInfo.alignment = max(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
-	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.planeBLAS.pScratch);
+	D3DResources::Create_Buffer(d3d, bufferInfo, &world_object.BLAS.pScratch);
 #if NAME_D3D_RESOURCES
-	dxr.planeBLAS.pScratch->SetName(L"DXR Plane BLAS Scratch for Model");
+	world_object.BLAS.pScratch->SetName(L"DXR Plane BLAS Scratch for Model");
 #endif
 
 	// Create the BLAS buffer
 	bufferInfo.size = ASPreBuildInfo.ResultDataMaxSizeInBytes;
 	bufferInfo.state = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-	D3DResources::Create_Buffer(d3d, bufferInfo, &dxr.planeBLAS.pResult);
+	D3DResources::Create_Buffer(d3d, bufferInfo, &world_object.BLAS.pResult);
 #if NAME_D3D_RESOURCES
-	dxr.planeBLAS.pResult->SetName(L"DXR BLAS for Model");
+	world_object.BLAS.pResult->SetName(L"DXR BLAS for Model");
 #endif
 
 	// Describe and build the bottom level acceleration structure
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
 	buildDesc.Inputs = ASInputs;	
-	buildDesc.ScratchAccelerationStructureData = dxr.planeBLAS.pScratch->GetGPUVirtualAddress();
-	buildDesc.DestAccelerationStructureData = dxr.planeBLAS.pResult->GetGPUVirtualAddress();
+	buildDesc.ScratchAccelerationStructureData = world_object.BLAS.pScratch->GetGPUVirtualAddress();
+	buildDesc.DestAccelerationStructureData = world_object.BLAS.pResult->GetGPUVirtualAddress();
 
 	d3d.cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 
 	// Wait for the BLAS build to complete
 	D3D12_RESOURCE_BARRIER uavBarrier;
 	uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-	uavBarrier.UAV.pResource = dxr.planeBLAS.pResult;
+	uavBarrier.UAV.pResource = world_object.BLAS.pResult;
 	uavBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 	d3d.cmdList->ResourceBarrier(1, &uavBarrier);
 }
@@ -1144,7 +1144,7 @@ void Create_Bottom_Level_AS_Plane(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resourc
 /**
 * Create the top level acceleration structure and its associated buffers.
 */
-void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, std::vector<Instance> &world_objs) 
+void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, std::vector<WorldObject> &world_objs) 
 {
 	// Describe the TLAS geometry instance(s)
 	UINT numInstances = static_cast<UINT>(world_objs.size()) + 1; // +1 for ground plane
@@ -1155,7 +1155,7 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	instanceDesc[0].InstanceContributionToHitGroupIndex = 0; // triangle
 	instanceDesc[0].InstanceMask = 0xFF;
 	memcpy(instanceDesc[0].Transform, world_objs[0].transform3x4, sizeof(FLOAT) * 12);
-	instanceDesc[0].AccelerationStructure = dxr.planeBLAS.pResult->GetGPUVirtualAddress();
+	instanceDesc[0].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
 	instanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 
 	// Model
@@ -1860,17 +1860,17 @@ void Build_Command_List(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resour
 /**
  * Release DXR resources.
  */
-void Destroy(DXRGlobal &dxr)
+void Destroy(DXRGlobal &dxr, std::vector<WorldObject> world_objects)
 {
 	SAFE_RELEASE(dxr.TLAS.pScratch);
 	SAFE_RELEASE(dxr.TLAS.pResult);
 	SAFE_RELEASE(dxr.TLAS.pInstanceDesc);
-	SAFE_RELEASE(dxr.BLAS.pScratch);
-	SAFE_RELEASE(dxr.BLAS.pResult);
-	SAFE_RELEASE(dxr.BLAS.pInstanceDesc);
-	SAFE_RELEASE(dxr.planeBLAS.pScratch);
-	SAFE_RELEASE(dxr.planeBLAS.pResult);
-	SAFE_RELEASE(dxr.planeBLAS.pInstanceDesc);
+	for (WorldObject& obj : world_objects)
+	{
+		SAFE_RELEASE(obj.BLAS.pScratch);
+		SAFE_RELEASE(obj.BLAS.pResult);
+		SAFE_RELEASE(obj.BLAS.pInstanceDesc);
+	}
 	SAFE_RELEASE(dxr.shaderTable);
 	SAFE_RELEASE(dxr.rgs.blob);
 	SAFE_RELEASE(dxr.rgs.pRootSignature);

@@ -186,8 +186,9 @@ vector<char> ReadFile(const string &filename)
 // Scene Object Loading (Model & Sphere)
 //--------------------------------------------------------------------------------------
 
-void LoadModel(string filepath, Model &model, std::vector<Material> &material_list) 
+Model LoadModel(string filepath, std::vector<Material> &material_list) 
 {
+	Model model;
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -236,12 +237,12 @@ void LoadModel(string filepath, Model &model, std::vector<Material> &material_li
 				1 - attrib.texcoords[2 * index.texcoord_index + 1]
 			};
 
-            vertex.normal = 
-            {
-                attrib.normals[3 * index.normal_index + 0],
-                attrib.normals[3 * index.normal_index + 1],
-                attrib.normals[3 * index.normal_index + 2]
-            };
+			vertex.normal = 
+			{
+				attrib.normals[3 * index.normal_index + 0],
+				attrib.normals[3 * index.normal_index + 1],
+				attrib.normals[3 * index.normal_index + 2]
+			};
 
 			// Fast find unique vertices using a hash
 			if (uniqueVertices.count(vertex) == 0) 
@@ -253,17 +254,19 @@ void LoadModel(string filepath, Model &model, std::vector<Material> &material_li
 			model.indices.push_back(uniqueVertices[vertex]);
 		}
 	}
+	return model;
 }
 
-void CreateSphere(float radius, Sphere &sphere, string filepath, std::vector<Material> &material_list) 
+Sphere CreateSphere(float radius, Sphere &sphere, string filepath, std::vector<Material> &material_list) 
 {
+	Sphere sphere;
 	std::vector<tinyobj::material_t> materials;
-    std::map<std::string, int> matMap;
-    std::string err;
+	std::map<std::string, int> matMap;
+	std::string err;
 
 	// Load the OBJ and MTL files
 	std::string mtl_basedir = "materials\\";
-    tinyobj::MaterialFileReader matreader(mtl_basedir);
+	tinyobj::MaterialFileReader matreader(mtl_basedir);
 	if (!matreader(filepath, &materials, &matMap, &err))
 	{
 		throw std::runtime_error(err);
@@ -288,9 +291,10 @@ void CreateSphere(float radius, Sphere &sphere, string filepath, std::vector<Mat
 
 	// Load the radius
 	sphere.radius = radius;
+	return sphere;
 }
 
-void CreateInstance(std::vector<Instance> &instance_list, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex)
+void CreateInstance(WorldObject object, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex)
 {
 	Instance new_instance = {pos, scale, rot, {}, id, hitGroupIndex};
 	
@@ -298,18 +302,18 @@ void CreateInstance(std::vector<Instance> &instance_list, DirectX::XMFLOAT3 pos,
 	CalculateTransformMatrix(new_instance);
 
 	// Add to instance list
-	instance_list.push_back(new_instance);
+	object.instances.push_back(new_instance);
 }
 
 void CalculateTransformMatrix(Instance &instance)
 {
-    DirectX::XMMATRIX mat = DirectX::XMMatrixAffineTransformation(
-        DirectX::XMLoadFloat3(&instance.scale), 
-        DirectX::XMVectorZero(), 
-        DirectX::XMLoadFloat4(&instance.rotation), 
-        DirectX::XMLoadFloat3(&instance.position)
-    );
-    mat = XMMatrixTranspose(mat);
+	DirectX::XMMATRIX mat = DirectX::XMMatrixAffineTransformation(
+		DirectX::XMLoadFloat3(&instance.scale), 
+		DirectX::XMVectorZero(), 
+		DirectX::XMLoadFloat4(&instance.rotation), 
+		DirectX::XMLoadFloat3(&instance.position)
+	);
+	mat = XMMatrixTranspose(mat);
 	memcpy(instance.transform3x4, &mat, sizeof(FLOAT) * 12);
 }
 

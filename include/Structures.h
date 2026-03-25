@@ -58,6 +58,25 @@ struct ConfigInfo
 	HINSTANCE		instance = NULL;
 };
 
+struct WorldObject
+{
+	AccelerationStructureBuffer		BLAS;
+	std::variant<Model,Sphere>		object;
+	std::vector<Instance>			instances;
+};
+
+struct Model
+{
+	int modelID;
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+};
+
+struct Sphere
+{
+	float radius;
+};
+
 struct Instance
 {
 	DirectX::XMFLOAT3 position;
@@ -65,7 +84,7 @@ struct Instance
 	DirectX::XMFLOAT4 rotation;
 	FLOAT transform3x4[3][4];
 	UINT InstanceID : 24;
-	UINT hitGroupIndex : 3; // model or sphere
+	UINT hitGroupIndex : 3;
 };
 
 struct Vertex
@@ -103,17 +122,6 @@ struct Material
 	float dissolve;
 	float shininess;
 	int illum;
-};
-
-struct Model
-{
-	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
-};
-
-struct Sphere
-{
-	float radius;
 };
 
 struct TextureInfo
@@ -354,8 +362,6 @@ struct HitProgram
 struct DXRGlobal
 {
 	AccelerationStructureBuffer						TLAS;
-	AccelerationStructureBuffer						BLAS;
-	AccelerationStructureBuffer						planeBLAS;
 	uint64_t										tlasSize;
 
 	ID3D12Resource*									shaderTable = nullptr;
