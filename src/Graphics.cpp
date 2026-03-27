@@ -177,10 +177,23 @@ void Upload_Texture(D3D12Global &d3d, ID3D12Resource* destResource, ID3D12Resour
 /*
 * Create the vertex buffer.
 */
-void Create_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, Model &model) 
+void Create_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject> &world_objs) 
 {
+	// Compute the size of the buffer
+    UINT vertexCount = 0;
+    for (const auto& wo : world_objs)
+    {
+        if (std::holds_alternative<Model>(wo.object))
+        {
+            const Model& model = std::get<Model>(wo.object);
+            vertexCount += (UINT)model.vertices.size();
+        }
+    }
+    if (vertexCount == 0)
+        return;
+	
 	// Create the vertex buffer resource
-	D3D12BufferCreateInfo info(((UINT)model.vertices.size() * sizeof(Vertex)), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+	D3D12BufferCreateInfo info((vertexCount * sizeof(Vertex)), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 	Create_Buffer(d3d, info, &resources.vertexBuffer);
 #if NAME_D3D_RESOURCES
 	resources.vertexBuffer->SetName(L"Vertex Buffer");
@@ -192,7 +205,20 @@ void Create_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, Model &mo
 	HRESULT hr = resources.vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
 	Utils::Validate(hr, L"Error: failed to map vertex buffer!");
 
-	memcpy(pVertexDataBegin, model.vertices.data(), info.size);
+	UINT offsetBytes = 0;
+
+	for (auto& wo : world_objs)
+	{
+		if (std::holds_alternative<Model>(wo.object)) // if model
+		{
+			Model& model = std::get<Model>(wo.object);
+			UINT copySize = (UINT)(model.vertices.size() * sizeof(Vertex));
+			model.vertexOffset = offsetBytes / sizeof(Vertex);
+			memcpy(pVertexDataBegin + offsetBytes, model.vertices.data(), copySize);
+			offsetBytes += copySize;
+		}
+	}
+
 	resources.vertexBuffer->Unmap(0, nullptr);
 
 	// Initialize the vertex buffer view
@@ -204,10 +230,23 @@ void Create_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, Model &mo
 /**
 * Create the index buffer.
 */
-void Create_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, Model &model) 
+void Create_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject> &world_objs) 
 {
+	// Compute the size of the buffer
+    UINT indexCount = 0;
+    for (const auto& wo : world_objs)
+    {
+        if (std::holds_alternative<Model>(wo.object))
+        {
+            const Model& model = std::get<Model>(wo.object);
+            indexCount += (UINT)model.indices.size();
+        }
+    }
+    if (indexCount == 0)
+        return;
+	
 	// Create the index buffer resource
-	D3D12BufferCreateInfo info((UINT)model.indices.size() * sizeof(UINT), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+	D3D12BufferCreateInfo info(indexCount * sizeof(UINT), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 	Create_Buffer(d3d, info, &resources.indexBuffer);
 #if NAME_D3D_RESOURCES
 	resources.indexBuffer->SetName(L"Index Buffer");
@@ -219,7 +258,20 @@ void Create_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, Model &mod
 	HRESULT hr = resources.indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin));
 	Utils::Validate(hr, L"Error: failed to map index buffer!");
 
-	memcpy(pIndexDataBegin, model.indices.data(), info.size);
+	UINT offsetBytes = 0;
+
+	for (auto& wo : world_objs)
+	{
+		if (std::holds_alternative<Model>(wo.object)) // if model
+		{
+			Model& model = std::get<Model>(wo.object);
+			UINT copySize = (UINT)(model.indices.size() * sizeof(UINT));
+			model.vertexOffset = offsetBytes / sizeof(UINT);
+			memcpy(pIndexDataBegin + offsetBytes, model.indices.data(), copySize);
+			offsetBytes += copySize;
+		}
+	}
+
 	resources.indexBuffer->Unmap(0, nullptr);
 
 	// Initialize the index buffer view
@@ -231,7 +283,7 @@ void Create_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, Model &mod
 /**
 * Create the AABB buffer.
 */
-void Create_AABB_Buffer(D3D12Global &d3d, D3D12Resources &resources, Sphere &sphere)
+void Create_AABB_Buffer(D3D12Global &d3d, D3D12Resources &resources)
 {
 	// Create the AABB (1x1x1 centered at the origin)
     resources.aabbData.MinX = -1.0f;
@@ -951,6 +1003,29 @@ namespace DXR
 /**
 * Create the bottom level acceleration structure out of triangles.
 */
+void Create_Bottom_Level_AS(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject> &world_objs)
+{
+	UINT numObjects = static_cast<UINT>(world_objs.size());
+
+	// Loop through all objects
+	for (auto& wo : world_objs)
+    {
+        if (std::holds_alternative<Model>(wo.object))
+        {
+            Model& model = std::get<Model>(wo.object);
+            Create_Bottom_Level_AS_Model(d3d, resources, wo, model);
+        }
+		else
+		{
+			Sphere& sphere = std::get<Sphere>(wo.object);
+            Create_Bottom_Level_AS_Sphere(d3d, resources, wo, sphere);
+		}
+    }
+}
+
+/**
+* Create the bottom level acceleration structure out of triangles.
+*/
 void Create_Bottom_Level_AS_Model(D3D12Global &d3d, D3D12Resources &resources, WorldObject &world_object, Model &model) 
 {
 	// Describe the geometry that goes in the bottom acceleration structure(s)
@@ -1147,39 +1222,29 @@ void Create_Bottom_Level_AS_Plane(D3D12Global &d3d, D3D12Resources &resources, W
 void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, std::vector<WorldObject> &world_objs) 
 {
 	// Describe the TLAS geometry instance(s)
-	UINT numInstances = static_cast<UINT>(world_objs.size()) + 1; // +1 for ground plane
-	std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instanceDesc(numInstances);
+	UINT numObjects = static_cast<UINT>(world_objs.size());
+	UINT numInstances = 0;
+	// std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instanceDesc(numObjects);
+	std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instanceDesc(1024); // TODO: Calculate the total number of instances!!!
 
-	// Ground plane
-	instanceDesc[0].InstanceID = 0;
-	instanceDesc[0].InstanceContributionToHitGroupIndex = 0; // triangle
-	instanceDesc[0].InstanceMask = 0xFF;
-	memcpy(instanceDesc[0].Transform, world_objs[0].transform3x4, sizeof(FLOAT) * 12);
-	instanceDesc[0].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
-	instanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-
-	// Model
-	// instanceDesc[1].InstanceID = 1;
-	// instanceDesc[1].InstanceContributionToHitGroupIndex = 0; // triangle
-	// instanceDesc[1].InstanceMask = 0xFF;
-	// memcpy(instanceDesc[1].Transform, world_objs[1].transform3x4, sizeof(FLOAT) * 12);
-	// instanceDesc[1].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
-	// instanceDesc[1].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-
-	// Loop through the instances
-	for (int i = 1; i < numInstances; i++)
+	// Loop through all instances
+	for (int i = 0; i < numObjects; i++)
 	{
-		instanceDesc[i].InstanceID = world_objs[i].InstanceID;
-		instanceDesc[i].InstanceContributionToHitGroupIndex = world_objs[i].hitGroupIndex;
-		instanceDesc[i].InstanceMask = 0xFF;
-		memcpy(instanceDesc[i].Transform, world_objs[i].transform3x4, sizeof(FLOAT) * 12);
-		instanceDesc[i].AccelerationStructure = dxr.BLAS.pResult->GetGPUVirtualAddress();
-		instanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+		numInstances = world_objs[i].instances.size();
+
+		for (int j = 0; j < numInstances; j++)
+		{
+			instanceDesc[j].InstanceID = world_objs[i].instances[j].InstanceID;
+			instanceDesc[j].InstanceContributionToHitGroupIndex = world_objs[i].instances[j].hitGroupIndex;
+			instanceDesc[j].InstanceMask = 0xFF;
+			memcpy(instanceDesc[j].Transform, world_objs[i].instances[j].transform3x4, sizeof(FLOAT) * 12);
+			instanceDesc[j].AccelerationStructure = world_objs[i].BLAS.pResult->GetGPUVirtualAddress();
+			instanceDesc[j].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+		}
 	}
 
 	// Create the TLAS instance buffer
 	D3D12BufferCreateInfo instanceBufferInfo;
-	// instanceBufferInfo.size = sizeof(instanceDesc);
 	instanceBufferInfo.size = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * numInstances;
 	instanceBufferInfo.heapType = D3D12_HEAP_TYPE_UPLOAD;
 	instanceBufferInfo.flags = D3D12_RESOURCE_FLAG_NONE;
@@ -1192,7 +1257,6 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	// Copy the instance data to the buffer
 	UINT8* pData;
 	dxr.TLAS.pInstanceDesc->Map(0, nullptr, (void**)&pData);
-	// memcpy(pData, &instanceDesc, sizeof(instanceDesc));
 	memcpy(pData, instanceDesc.data(), instanceBufferInfo.size);
 	dxr.TLAS.pInstanceDesc->Unmap(0, nullptr);
 

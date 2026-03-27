@@ -188,7 +188,7 @@ vector<char> ReadFile(const string &filename)
 
 Model LoadModel(string filepath, std::vector<Material> &material_list) 
 {
-	Model model;
+	Model model = {};
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;

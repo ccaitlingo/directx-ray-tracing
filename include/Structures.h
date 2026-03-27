@@ -67,7 +67,8 @@ struct WorldObject
 
 struct Model
 {
-	int modelID;
+	UINT vertexOffset;
+	UINT indexOffset;
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 };

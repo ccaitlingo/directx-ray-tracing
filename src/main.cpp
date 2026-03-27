@@ -233,19 +233,15 @@ public:
 		// Create common resources
 		D3DResources::Create_Descriptor_Heaps(d3d, resources);
 		D3DResources::Create_BackBuffer_RTV(d3d, resources);
-		D3DResources::Create_Plane_Vertex_Buffer(d3d, resources, plane);
-		D3DResources::Create_Plane_Index_Buffer(d3d, resources, plane);
-		D3DResources::Create_Vertex_Buffer(d3d, resources, model); // for models
-		D3DResources::Create_Index_Buffer(d3d, resources, model); // for models
-		D3DResources::Create_AABB_Buffer(d3d, resources, sphere);
+		D3DResources::Create_Vertex_Buffer(d3d, resources, world_objs);
+		D3DResources::Create_Index_Buffer(d3d, resources, world_objs);
+		D3DResources::Create_AABB_Buffer(d3d, resources);
 		//D3DResources::Create_Texture(d3d, resources, materials[0]); // TODO: support multiple models/instances
 		D3DResources::Create_View_CB(d3d, resources);
 		D3DResources::Create_Material_Buffer(d3d, resources, materials);
 		
 		// Create DXR specific resources
-		DXR::Create_Bottom_Level_AS_Plane(d3d, dxr, resources, plane);
-		DXR::Create_Bottom_Level_AS_Model(d3d, dxr, resources, model); // for models
-		//DXR::Create_Bottom_Level_AS_Sphere(d3d, dxr, resources, sphere); // for spheres
+		DXR::Create_Bottom_Level_AS(d3d, dxr, resources, world_objs);
 		DXR::Create_Top_Level_AS(d3d, dxr, resources, world_objs);
 		DXR::Create_DXR_Output(d3d, resources);
 		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, model, materials);
