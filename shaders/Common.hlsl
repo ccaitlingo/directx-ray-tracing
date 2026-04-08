@@ -84,10 +84,8 @@ RaytracingAccelerationStructure SceneBVH	: register(t0);
 
 ByteAddressBuffer indices					: register(t1);
 ByteAddressBuffer vertices					: register(t2);
-ByteAddressBuffer planeIndices			    : register(t3);
-ByteAddressBuffer planeVertices             : register(t4);
-Texture2D<float4> albedo					: register(t5);
-StructuredBuffer<MaterialCB> materials      : register(t6);
+Texture2D<float4> albedo					: register(t3);
+StructuredBuffer<MaterialCB> materials      : register(t4);
 
 // ---[ Helper Functions ]---
 
@@ -127,64 +125,30 @@ VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics)
 
 VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics, uint instanceID)
 {
-    if (instanceID == 0)
+    uint3 indices = GetIndices(triangleIndex);
+    VertexAttributes v;
+    v.position = float3(0, 0, 0);
+    v.uv = float2(0, 0);
+    v.normal = float3(0, 0, 0);
+
+    for (uint i = 0; i < 3; i++)
     {
-        uint3 indices = GetIndices(triangleIndex);
+        int address = (indices[i] * 8) * 4; // 8 floats per vertex
 
-        VertexAttributes v;
-        v.position = float3(0, 0, 0);
-        v.uv = float2(0, 0);
-        v.normal = float3(0, 0, 0);
+        // position (float3)
+        v.position += asfloat(vertices.Load3(address)) * barycentrics[i];
+        address += 3 * 4;
 
-        for (uint i = 0; i < 3; i++)
-        {
-            int address = (indices[i] * 8) * 4; // 8 floats per vertex
+        // uv (float2)
+        v.uv += asfloat(vertices.Load2(address)) * barycentrics[i];
+        address += 2 * 4;
 
-            // position (float3)
-            v.position += asfloat(vertices.Load3(address)) * barycentrics[i];
-            address += 3 * 4;
-
-            // uv (float2)
-            v.uv += asfloat(vertices.Load2(address)) * barycentrics[i];
-            address += 2 * 4;
-
-            // normal (float3)
-            v.normal += asfloat(vertices.Load3(address)) * barycentrics[i];
-        }
-
-        v.normal = normalize(v.normal);
-        return v;
+        // normal (float3)
+        v.normal += asfloat(vertices.Load3(address)) * barycentrics[i];
     }
-    else // Ground plane
-    {
-        uint baseIndex = (triangleIndex * 3);
-        int address = (baseIndex * 4);
-        uint3 indices = planeIndices.Load3(address);
 
-        VertexAttributes v;
-        v.position = float3(0, 0, 0);
-        v.uv = float2(0, 0);
-        v.normal = float3(0, 0, 0);
-
-        for (uint i = 0; i < 3; i++)
-        {
-            int address = (indices[i] * 8) * 4; // 8 floats per vertex
-
-            // position (float3)
-            v.position += asfloat(planeVertices.Load3(address)) * barycentrics[i];
-            address += 3 * 4;
-
-            // uv (float2)
-            v.uv += asfloat(planeVertices.Load2(address)) * barycentrics[i];
-            address += 2 * 4;
-
-            // normal (float3)
-            v.normal += asfloat(planeVertices.Load3(address)) * barycentrics[i];
-        }
-
-        v.normal = normalize(v.normal);
-        return v;
-    }
+    v.normal = normalize(v.normal);
+    return v;
 }
 
 uint pcg_hash(uint input)

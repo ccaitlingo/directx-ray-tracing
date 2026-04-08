@@ -348,8 +348,8 @@ struct Instance
 	DirectX::XMFLOAT3 scale;
 	DirectX::XMFLOAT4 rotation;
 	FLOAT transform3x4[3][4];
-	UINT InstanceID : 24;
-	UINT hitGroupIndex : 3;
+	UINT InstanceID;
+	UINT hitGroupIndex;
 };
 
 struct WorldObject

@@ -53,39 +53,41 @@ public:
 	// Generate famous RTOW scene
 	void BuildRandomScene(std::vector<WorldObject*> &world_objs, WorldObject &world_object) {
 
+		bool isModel = std::holds_alternative<Model>(world_object.object);
+		uint32_t hitgroup = isModel ? TRIANGLE : AABB;
 		uint32_t instanceID = world_objs.size();
-		uint32_t hitgroup = std::holds_alternative<Model>(world_object.object) ? 0 : 1;
 
-		const float scale = 1.0f;
-		const float smallRadius = 0.2f * scale;
-		const float smallHeight = -0.8f * scale;
-		const float bigRadius = 1.0f * scale;
-		const float bigDistance = 2.5f * scale;
-		const float groundRadius = 1000.0f * scale;
-		const float groundHeight = -1001.0f * scale;
-		const float spread = 2.5f * scale;
-		const float nudge = -0.8f * scale;
-		const float collisionDist = 1.2f * scale;
-		const float gridMax = 11 * scale;
+		float scale = 1.0f;
+		float smallRadius = 0.2f * scale;
+		float smallHeight = -0.8f * scale;
+		float bigRadius = 1.0f * scale;
+		float bigHeight = 0.0f * scale;
+		float bigDistance = 2.5f * scale;
+		float spread = 1.0f * scale;
+		float nudge = -0.8f * scale;
+		float collisionDist = 1.2f * scale;
+		float gridMax = 11 * scale;
 
-		// const float scale = 1.0f;
-		// const float smallRadius = 0.2f * scale;
-		// const float smallHeight = -0.8f * scale;
-		// const float bigRadius = 1.0f * scale;
-		// const float bigDistance = 2.5f * scale;
-		// const float groundRadius = 1000.0f * scale;
-		// const float groundHeight = -1001.0f * scale;
-		// const float spread = 2.5f * scale;
-		// const float nudge = -0.8f * scale;
-		// const float collisionDist = 1.2f * scale;
-		// const float gridMax = 11 * scale;
+		if (isModel)
+		{
+			scale = 1.0f;
+			smallRadius = 0.2f * scale;
+			smallHeight = -1.0f * scale;
+			bigRadius = 1.0f * scale;
+			bigHeight = -1.2f * scale;
+			bigDistance = 7.2f * scale;
+			spread = 2.5f * scale;
+			nudge = -0.8f * scale;
+			collisionDist = 2.0f * scale;
+			gridMax = 11 * scale;
+		}
 
 		// A bunch of random small instances
 		for (int a = -gridMax; a < gridMax; ++a) {
 			for (int b = -gridMax; b < gridMax; ++b) {
 				float choose_mat = RandomFloat();
-				float centerX = a + 0.9 * RandomFloat();
-				float centerZ = b + 0.9 * RandomFloat();
+				float centerX = (a + 0.9 * RandomFloat()) * spread;
+				float centerZ = (b + 0.9 * RandomFloat()) * spread;
 
 				// Collision detection with three large instances
 				float dx1 = centerX, dz1 = centerZ;
@@ -111,15 +113,15 @@ public:
 
 		// Three large instances
 		Utils::CreateInstance(world_object,
-			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), 
+			DirectX::XMFLOAT3(0.0f, bigHeight, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
 		Utils::CreateInstance(world_object,
-			DirectX::XMFLOAT3(-bigDistance, 0.0f, 0.0f), 
+			DirectX::XMFLOAT3(-bigDistance, bigHeight, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
 		Utils::CreateInstance(world_object,
-			DirectX::XMFLOAT3(bigDistance, 0.0f, 0.0f), 
+			DirectX::XMFLOAT3(bigDistance, bigHeight, 0.0f), 
 			DirectX::XMFLOAT3(bigRadius, bigRadius, bigRadius),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), instanceID++, hitgroup);
 	}
@@ -151,10 +153,10 @@ public:
 			DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f),
 			DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
-			0, 0);
+			0, TRIANGLE);
 
 		// Create the scene
-		BuildRandomScene(world_objs, sphere); // 0 = model, 1 = procedural sphere
+		BuildRandomScene(world_objs, sphere);
 
 		// // Create Instance 0 of sphere (ground)
 		// Utils::CreateInstance(

@@ -250,7 +250,7 @@ void Create_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vecto
 		if (auto* model = std::get_if<Model>(&wo->object)) // if model
 		{
 			UINT copySize = (UINT)(model->indices.size() * sizeof(UINT));
-			model->vertexOffset = offsetBytes / sizeof(UINT);
+			model->indexOffset = offsetBytes / sizeof(UINT);
 			memcpy(pIndexDataBegin + offsetBytes, model->indices.data(), copySize);
 			offsetBytes += copySize;
 		}
@@ -903,18 +903,16 @@ namespace DXR
 {
 
 /**
-* Create the bottom level acceleration structure out of triangles.
+* Create the bottom level acceleration structure.
 */
 void Create_Bottom_Level_AS(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject*> &world_objs)
 {
-	UINT numObjects = static_cast<UINT>(world_objs.size());
-
 	// Loop through all objects
     for (auto* wo : world_objs)
     {
-        if (auto* model = std::get_if<Model>(&wo->object)) // get_if needs a pointer to the variant
+        if (auto* model = std::get_if<Model>(&wo->object))
         {
-            Create_Bottom_Level_AS_Model(d3d, resources, *wo, *model); // dereference pointer for the function
+            Create_Bottom_Level_AS_Model(d3d, resources, *wo, *model);
         }
         else if (auto* sphere = std::get_if<Sphere>(&wo->object))
         {
@@ -931,11 +929,11 @@ void Create_Bottom_Level_AS_Model(D3D12Global &d3d, D3D12Resources &resources, W
 	// Describe the geometry that goes in the bottom acceleration structure(s)
 	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc;
 	geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-	geometryDesc.Triangles.VertexBuffer.StartAddress = resources.vertexBuffer->GetGPUVirtualAddress();
+	geometryDesc.Triangles.VertexBuffer.StartAddress = resources.vertexBuffer->GetGPUVirtualAddress() + model.vertexOffset * sizeof(Vertex);
 	geometryDesc.Triangles.VertexBuffer.StrideInBytes = resources.vertexBufferView.StrideInBytes;
 	geometryDesc.Triangles.VertexCount = static_cast<UINT>(model.vertices.size());
 	geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-	geometryDesc.Triangles.IndexBuffer = resources.indexBuffer->GetGPUVirtualAddress();
+	geometryDesc.Triangles.IndexBuffer = resources.indexBuffer->GetGPUVirtualAddress() + model.indexOffset * sizeof(UINT);
 	geometryDesc.Triangles.IndexFormat = resources.indexBufferView.Format;
 	geometryDesc.Triangles.IndexCount = static_cast<UINT>(model.indices.size());
 	geometryDesc.Triangles.Transform3x4 = 0;
@@ -990,7 +988,7 @@ void Create_Bottom_Level_AS_Model(D3D12Global &d3d, D3D12Resources &resources, W
 }
 
 /**
-* Create the bottom level acceleration structure out of spheres.
+* Create the bottom level acceleration structure out of custom AABBs (spheres).
 */
 void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, D3D12Resources &resources, WorldObject &world_object, Sphere &sphere) 
 {
@@ -1032,72 +1030,6 @@ void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, D3D12Resources &resources, 
 	D3DResources::Create_Buffer(d3d, bufferInfo, &world_object.BLAS.pResult);
 #if NAME_D3D_RESOURCES
 	world_object.BLAS.pResult->SetName(L"DXR BLAS for Sphere");
-#endif
-
-	// Describe and build the bottom level acceleration structure
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
-	buildDesc.Inputs = ASInputs;	
-	buildDesc.ScratchAccelerationStructureData = world_object.BLAS.pScratch->GetGPUVirtualAddress();
-	buildDesc.DestAccelerationStructureData = world_object.BLAS.pResult->GetGPUVirtualAddress();
-
-	d3d.cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
-
-	// Wait for the BLAS build to complete
-	D3D12_RESOURCE_BARRIER uavBarrier;
-	uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-	uavBarrier.UAV.pResource = world_object.BLAS.pResult;
-	uavBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	d3d.cmdList->ResourceBarrier(1, &uavBarrier);
-}
-
-/*
-* Create the bottom level acceleration structure out of a plane (Note: the plane is made of 2 triangles).
-*/
-void Create_Bottom_Level_AS_Plane(D3D12Global &d3d, D3D12Resources &resources, WorldObject &world_object, Model &model)
-{
-    // Describe the geometry that goes in the bottom acceleration structure(s)
-    D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
-    geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-    geometryDesc.Triangles.VertexBuffer.StartAddress = resources.planeVertexBuffer->GetGPUVirtualAddress();
-    geometryDesc.Triangles.VertexBuffer.StrideInBytes = resources.planeVertexBufferView.StrideInBytes;
-    geometryDesc.Triangles.VertexCount = static_cast<UINT>(model.vertices.size());
-    geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-    geometryDesc.Triangles.IndexBuffer = resources.planeIndexBuffer->GetGPUVirtualAddress();
-	geometryDesc.Triangles.IndexFormat = resources.planeIndexBufferView.Format;
-	geometryDesc.Triangles.IndexCount  = static_cast<UINT>(model.indices.size());
-	geometryDesc.Triangles.Transform3x4 = 0;
-	geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
-
-    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS buildFlags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
-
-    // Get the size requirements for the BLAS buffers
-    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS ASInputs = {};
-    ASInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
-    ASInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    ASInputs.pGeometryDescs = &geometryDesc;
-    ASInputs.NumDescs = 1;
-    ASInputs.Flags = buildFlags;
-
-    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO ASPreBuildInfo = {};
-    d3d.device->GetRaytracingAccelerationStructurePrebuildInfo(&ASInputs, &ASPreBuildInfo);
-
-    ASPreBuildInfo.ScratchDataSizeInBytes = ALIGN(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ASPreBuildInfo.ScratchDataSizeInBytes);
-    ASPreBuildInfo.ResultDataMaxSizeInBytes = ALIGN(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ASPreBuildInfo.ResultDataMaxSizeInBytes);
-
-    // Create the BLAS scratch buffer
-	D3D12BufferCreateInfo bufferInfo(ASPreBuildInfo.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	bufferInfo.alignment = max(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
-	D3DResources::Create_Buffer(d3d, bufferInfo, &world_object.BLAS.pScratch);
-#if NAME_D3D_RESOURCES
-	world_object.BLAS.pScratch->SetName(L"DXR Plane BLAS Scratch for Model");
-#endif
-
-	// Create the BLAS buffer
-	bufferInfo.size = ASPreBuildInfo.ResultDataMaxSizeInBytes;
-	bufferInfo.state = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-	D3DResources::Create_Buffer(d3d, bufferInfo, &world_object.BLAS.pResult);
-#if NAME_D3D_RESOURCES
-	world_object.BLAS.pResult->SetName(L"DXR BLAS for Model");
 #endif
 
 	// Describe and build the bottom level acceleration structure
@@ -1600,12 +1532,10 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 	// 1 SRV for the Scene BVH
 	// 1 SRV for the index buffer
 	// 1 SRV for the vertex buffer
-	// 1 SRV for the plane index buffer
-	// 1 SRV for the plane vertex buffer
 	// 1 SRV for the texture
 	// 1 SRV for the materials
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors = 9;
+	desc.NumDescriptors = 7;
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
@@ -1676,32 +1606,6 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 
 	handle.ptr += handleIncrement;
 	d3d.device->CreateShaderResourceView(resources.vertexBuffer, &vertexSRVDesc, handle);
-
-	// Create the plane index buffer SRV
-	D3D12_SHADER_RESOURCE_VIEW_DESC planeIndexSRVDesc;
-	planeIndexSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-	planeIndexSRVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-	planeIndexSRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
-	planeIndexSRVDesc.Buffer.StructureByteStride = 0;
-	planeIndexSRVDesc.Buffer.FirstElement = 0;
-	planeIndexSRVDesc.Buffer.NumElements = (6 * sizeof(UINT)) / sizeof(float);
-	planeIndexSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-	handle.ptr += handleIncrement;
-	d3d.device->CreateShaderResourceView(resources.planeIndexBuffer, &planeIndexSRVDesc, handle);
-
-	// Create the plane vertex buffer SRV
-	D3D12_SHADER_RESOURCE_VIEW_DESC planeVertexSRVDesc;
-	planeVertexSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-	planeVertexSRVDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-	planeVertexSRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
-	planeVertexSRVDesc.Buffer.StructureByteStride = 0;
-	planeVertexSRVDesc.Buffer.FirstElement = 0;
-	planeVertexSRVDesc.Buffer.NumElements = (4 * sizeof(Vertex)) / sizeof(float);
-	planeVertexSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-	handle.ptr += handleIncrement;
-	d3d.device->CreateShaderResourceView(resources.planeVertexBuffer, &planeVertexSRVDesc, handle);
 
 	// Create the material texture SRV
 	D3D12_SHADER_RESOURCE_VIEW_DESC textureSRVDesc = {};
