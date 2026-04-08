@@ -39,7 +39,7 @@ namespace Utils
 
 	Sphere CreateSphere(float radius, std::string filepath, std::vector<Material> &material);
 
-	void CreateInstance(WorldObject object, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex);
+	void CreateInstance(WorldObject &object, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex);
 
 	void CalculateTransformMatrix(Instance &instance);
 

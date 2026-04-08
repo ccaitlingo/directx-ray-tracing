@@ -1124,6 +1124,7 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 	// Describe the TLAS geometry instance(s)
 	UINT numObjects = static_cast<UINT>(world_objs.size());
 	UINT numInstances = Utils::instanceCount(world_objs);
+	// UINT numInstances = 7;
 	UINT numObjInstances = 0;
 	std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instanceDesc(numInstances);
 

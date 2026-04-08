@@ -294,7 +294,7 @@ Sphere CreateSphere(float radius, string filepath, std::vector<Material> &materi
 	return sphere;
 }
 
-void CreateInstance(WorldObject object, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex)
+void CreateInstance(WorldObject& object, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex)
 {
 	Instance new_instance = {pos, scale, rot, {}, id, hitGroupIndex};
 	
@@ -333,8 +333,8 @@ std::tuple<UINT, UINT, UINT> world_obj_iterator(const std::vector<WorldObject*>&
             const Model& model = std::get<Model>(obj->object);
             vertexCount += model.vertices.size();
             indexCount  += model.indices.size();
-			instanceCount += obj->instances.size();
         }
+		instanceCount += obj->instances.size();
     }
 
     return { vertexCount, indexCount, instanceCount };

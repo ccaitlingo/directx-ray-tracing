@@ -51,14 +51,14 @@ public:
 	}
 
 	// Generate famous RTOW scene
-	void BuildRandomScene(std::vector<WorldObject*>& world_objs, WorldObject world_object) {
+	void BuildRandomScene(std::vector<WorldObject*> &world_objs, WorldObject &world_object) {
 
 		uint32_t instanceID = world_objs.size();
 		uint32_t hitgroup = std::holds_alternative<Model>(world_object.object) ? 0 : 1;
 
 		const float scale = 1.0f;
 		const float smallRadius = 0.2f * scale;
-		const float smallHeight = -0.1f * scale;
+		const float smallHeight = -0.8f * scale;
 		const float bigRadius = 1.0f * scale;
 		const float bigDistance = 2.5f * scale;
 		const float groundRadius = 1000.0f * scale;
@@ -79,13 +79,6 @@ public:
 		// const float nudge = -0.8f * scale;
 		// const float collisionDist = 1.2f * scale;
 		// const float gridMax = 11 * scale;
-
-		// Ground
-		// Utils::CreateInstance(world_object, 
-		// 	DirectX::XMFLOAT3(0.0f, groundHeight, 0.0f),
-		// 	DirectX::XMFLOAT3(groundRadius, groundRadius, groundRadius),
-		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
-		// 	instanceID++, hitgroup);
 
 		// A bunch of random small instances
 		for (int a = -gridMax; a < gridMax; ++a) {
@@ -153,10 +146,10 @@ public:
 		sphere.object = Utils::CreateSphere(1.0f, "colors.mtl", materials);
 		world_objs.push_back(&sphere);
 
-		// Instance of a plane
+		// Ground plane
 		Utils::CreateInstance(plane, 
-			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
-			DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f),
+			DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 			0, 0);
 
@@ -165,7 +158,7 @@ public:
 
 		// // Create Instance 0 of sphere (ground)
 		// Utils::CreateInstance(
-		// 	world_objs,
+		// 	sphere,
 		// 	DirectX::XMFLOAT3(0.0f, -81.0f, 0.0f), // position
 		// 	DirectX::XMFLOAT3(80.0f, 80.0f, 80.0f), // scale
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), // rotation
@@ -174,7 +167,7 @@ public:
 		// );
 		// // Create Instance 1 of sphere (center)
 		// Utils::CreateInstance(
-		// 	world_objs,
+		// 	sphere,
 		// 	DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
 		// 	DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
@@ -183,7 +176,7 @@ public:
 		// );
 		// // Create Instance 2 of sphere (right)
 		// Utils::CreateInstance(
-		// 	world_objs,
+		// 	sphere,
 		// 	DirectX::XMFLOAT3(-2.0f, 0.0f, -0.5f),
 		// 	DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
@@ -192,7 +185,7 @@ public:
 		// );
 		// // Create Instance 3 of sphere (left)
 		// Utils::CreateInstance(
-		// 	world_objs,
+		// 	sphere,
 		// 	DirectX::XMFLOAT3(2.0f, -0.05f, -2.5f),
 		// 	DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
@@ -201,16 +194,16 @@ public:
 		// );
 		// // Create Instance 4 of sphere (small left)
 		// Utils::CreateInstance(
-		// 	world_objs,
+		// 	sphere,
 		// 	DirectX::XMFLOAT3(1.25f, -0.65f, 0.0f),
 		// 	DirectX::XMFLOAT3(0.35f, 0.35f, 0.35f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	4,
 		// 	1
 		// );
-		// // Create Instance 4 of sphere (small right)
+		// // Create Instance 5 of sphere (small right)
 		// Utils::CreateInstance(
-		// 	world_objs,
+		// 	sphere,
 		// 	DirectX::XMFLOAT3(-1.2f, -0.75f, 0.0f),
 		// 	DirectX::XMFLOAT3(0.25f, 0.25f, 0.25f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
