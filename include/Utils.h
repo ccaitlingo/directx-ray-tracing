@@ -43,6 +43,14 @@ namespace Utils
 
 	void CalculateTransformMatrix(Instance &instance);
 
+	std::tuple<UINT, UINT, UINT> world_obj_iterator(const std::vector<WorldObject*>& world_objects);
+
+	UINT vertexCount(const std::vector<WorldObject*>& world_objects);
+
+	UINT indexCount(const std::vector<WorldObject*>& world_objects);
+
+	UINT instanceCount(const std::vector<WorldObject*>& world_objects);
+
 	void Validate(HRESULT hr, LPWSTR message);
 
 	TextureInfo LoadTexture(std::string filepath);

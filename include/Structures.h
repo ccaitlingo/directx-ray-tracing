@@ -46,97 +46,11 @@ static bool CompareVector2WithEpsilon(const DirectX::XMFLOAT2& lhs, const Direct
 }
 
 //--------------------------------------------------------------------------------------
-// Global Structures
+// Constant Buffers
 //--------------------------------------------------------------------------------------
-
-struct ConfigInfo 
-{
-	int				width = 640;
-	int				height = 360;
-	bool			vsync = false;
-	std::string		model = "";
-	HINSTANCE		instance = NULL;
-};
-
-struct WorldObject
-{
-	AccelerationStructureBuffer		BLAS;
-	std::variant<Model,Sphere>		object;
-	std::vector<Instance>			instances;
-};
-
-struct Model
-{
-	UINT vertexOffset;
-	UINT indexOffset;
-	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
-};
-
-struct Sphere
-{
-	float radius;
-};
-
-struct Instance
-{
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT3 scale;
-	DirectX::XMFLOAT4 rotation;
-	FLOAT transform3x4[3][4];
-	UINT InstanceID : 24;
-	UINT hitGroupIndex : 3;
-};
-
-struct Vertex
-{
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT2 uv;
-	DirectX::XMFLOAT3 normal;
-
-	bool operator==(const Vertex &v) const 
-	{
-		if (CompareVector3WithEpsilon(position, v.position)) 
-		{
-			if (CompareVector2WithEpsilon(uv, v.uv)) return true;
-			return true;
-		}
-		return false;
-	}
-
-	Vertex& operator=(const Vertex& v) 
-	{
-		position = v.position;
-		uv = v.uv;
-		normal = v.normal;
-		return *this;
-	}
-};
-
-struct Material 
-{
-	std::string name = "defaultMaterial";
-	std::string texturePath = "";
-	float  textureResolution = 512;
-	float ambient[3];
-	float diffuse[3];
-	float dissolve;
-	float shininess;
-	int illum;
-};
-
-struct TextureInfo
-{
-	std::vector<UINT8> pixels;
-	int width = 0;
-	int height = 0;
-	int stride = 0;
-	int offset = 0;
-};
 
 struct MaterialCB
 {
-	// Later this will become an array
 	DirectX::XMFLOAT4 resolution;
 	DirectX::XMFLOAT4 ambient;
 	DirectX::XMFLOAT4 diffuse;
@@ -375,4 +289,93 @@ struct DXRGlobal
 
 	ID3D12StateObject*								rtpso = nullptr;
 	ID3D12StateObjectProperties*					rtpsoInfo = nullptr;
+};
+
+//--------------------------------------------------------------------------------------
+// Global Structures
+//--------------------------------------------------------------------------------------
+
+struct ConfigInfo 
+{
+	int				width = 640;
+	int				height = 360;
+	bool			vsync = false;
+	std::string		model = "";
+	HINSTANCE		instance = NULL;
+};
+
+struct Vertex
+{
+	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT2 uv;
+	DirectX::XMFLOAT3 normal;
+
+	bool operator==(const Vertex &v) const 
+	{
+		if (CompareVector3WithEpsilon(position, v.position)) 
+		{
+			if (CompareVector2WithEpsilon(uv, v.uv)) return true;
+			return true;
+		}
+		return false;
+	}
+
+	Vertex& operator=(const Vertex& v) 
+	{
+		position = v.position;
+		uv = v.uv;
+		normal = v.normal;
+		return *this;
+	}
+};
+
+struct Model
+{
+	UINT vertexOffset;
+	UINT indexOffset;
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+};
+
+struct Sphere
+{
+	float radius;
+};
+
+struct Instance
+{
+	DirectX::XMFLOAT3 position;
+	DirectX::XMFLOAT3 scale;
+	DirectX::XMFLOAT4 rotation;
+	FLOAT transform3x4[3][4];
+	UINT InstanceID : 24;
+	UINT hitGroupIndex : 3;
+};
+
+struct WorldObject
+{
+	AccelerationStructureBuffer		BLAS;
+	std::variant<Model,Sphere>		object;
+	std::vector<Instance>			instances;
+};
+
+struct Material 
+{
+	std::string name = "defaultMaterial";
+	std::string texturePath = "";
+	float  textureResolution = 512;
+	float ambient[3];
+	float diffuse[3];
+	float dissolve;
+	float shininess;
+	int illum;
+};
+
+struct TextureInfo
+{
+	std::vector<UINT8> pixels;
+	int width = 0;
+	int height = 0;
+	int stride = 0;
+	int offset = 0;
 };

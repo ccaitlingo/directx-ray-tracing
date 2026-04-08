@@ -257,7 +257,7 @@ Model LoadModel(string filepath, std::vector<Material> &material_list)
 	return model;
 }
 
-Sphere CreateSphere(float radius, Sphere &sphere, string filepath, std::vector<Material> &material_list) 
+Sphere CreateSphere(float radius, string filepath, std::vector<Material> &material_list) 
 {
 	Sphere sphere;
 	std::vector<tinyobj::material_t> materials;
@@ -315,6 +315,44 @@ void CalculateTransformMatrix(Instance &instance)
 	);
 	mat = XMMatrixTranspose(mat);
 	memcpy(instance.transform3x4, &mat, sizeof(FLOAT) * 12);
+}
+
+/**
+* TODO: Write a more efficient way to gather this information.
+*/
+std::tuple<UINT, UINT, UINT> world_obj_iterator(const std::vector<WorldObject*>& world_objects)
+{
+    UINT vertexCount = 0;
+    UINT indexCount  = 0;
+	UINT instanceCount = 0;
+
+    for (WorldObject* obj : world_objects)
+    {
+        if (std::holds_alternative<Model>(obj->object))
+        {
+            const Model& model = std::get<Model>(obj->object);
+            vertexCount += model.vertices.size();
+            indexCount  += model.indices.size();
+			instanceCount += obj->instances.size();
+        }
+    }
+
+    return { vertexCount, indexCount, instanceCount };
+}
+
+UINT vertexCount(const std::vector<WorldObject*>& world_objects)
+{
+	return std::get<0>(world_obj_iterator(world_objects));
+}
+
+UINT indexCount(const std::vector<WorldObject*>& world_objects)
+{
+	return std::get<1>(world_obj_iterator(world_objects));
+}
+
+UINT instanceCount(const std::vector<WorldObject*>& world_objects)
+{
+	return std::get<2>(world_obj_iterator(world_objects));
 }
 
 //--------------------------------------------------------------------------------------

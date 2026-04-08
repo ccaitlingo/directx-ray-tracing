@@ -51,7 +51,7 @@ public:
 	}
 
 	// Generate famous RTOW scene
-	void BuildRandomScene(std::vector<WorldObject>& world_objs, WorldObject world_object) {
+	void BuildRandomScene(std::vector<WorldObject*>& world_objs, WorldObject world_object) {
 
 		uint32_t instanceID = world_objs.size();
 		uint32_t hitgroup = std::holds_alternative<Model>(world_object.object) ? 0 : 1;
@@ -143,15 +143,15 @@ public:
 
 		// Load plane model
 		plane.object = Utils::LoadModel("./models/plane.obj", materials);
-		world_objs.push_back(plane);
+		world_objs.push_back(&plane);
 
 		// Load a model
 		model.object = Utils::LoadModel("./models/sphere.obj", materials);
-		world_objs.push_back(model);
+		world_objs.push_back(&model);
 
 		// Create a sphere
 		sphere.object = Utils::CreateSphere(1.0f, "colors.mtl", materials);
-		world_objs.push_back(sphere);
+		world_objs.push_back(&sphere);
 
 		// Instance of a plane
 		Utils::CreateInstance(plane, 
@@ -241,10 +241,10 @@ public:
 		D3DResources::Create_Material_Buffer(d3d, resources, materials);
 		
 		// Create DXR specific resources
-		DXR::Create_Bottom_Level_AS(d3d, dxr, resources, world_objs);
+		DXR::Create_Bottom_Level_AS(d3d, resources, world_objs);
 		DXR::Create_Top_Level_AS(d3d, dxr, resources, world_objs);
 		DXR::Create_DXR_Output(d3d, resources);
-		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, model, materials);
+		DXR::Create_Descriptor_Heaps(d3d, dxr, resources, world_objs, materials);
 		DXR::Create_RayGen_Program(d3d, dxr, shaderCompiler);
 		DXR::Create_Miss_Program(d3d, dxr, shaderCompiler);
 		DXR::Create_Closest_Hit_Program(d3d, dxr, shaderCompiler);
@@ -278,7 +278,7 @@ public:
 		D3D12::WaitForGPU(d3d);
 		CloseHandle(d3d.fenceEvent);
 
-		DXR::Destroy(dxr);
+		DXR::Destroy(dxr, world_objs);
 		D3DResources::Destroy(resources);		
 		D3DShaders::Destroy(shaderCompiler);
 		D3D12::Destroy(d3d);
@@ -292,7 +292,7 @@ private:
 	WorldObject plane;
 	WorldObject sphere;
 	std::vector<Material> materials;
-	std::vector<WorldObject> world_objs;
+	std::vector<WorldObject*> world_objs;
 
 	DXRGlobal dxr = {};
 	D3D12Global d3d = {};
