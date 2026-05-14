@@ -134,15 +134,14 @@ struct D3D12Resources
 	D3D12_VERTEX_BUFFER_VIEW						vertexBufferView;
 	ID3D12Resource*									indexBuffer = nullptr;
 	D3D12_INDEX_BUFFER_VIEW							indexBufferView;
-	
-	ID3D12Resource*									aabbBuffer = nullptr;
-	D3D12_RAYTRACING_AABB							aabbData;
-	UINT8*											aabbBufferStart = nullptr;
-
 	ID3D12Resource*									planeVertexBuffer = nullptr;
 	D3D12_VERTEX_BUFFER_VIEW						planeVertexBufferView;
 	ID3D12Resource*									planeIndexBuffer = nullptr;
 	D3D12_INDEX_BUFFER_VIEW							planeIndexBufferView;
+	
+	ID3D12Resource*									aabbBuffer = nullptr;
+	D3D12_RAYTRACING_AABB							aabbData;
+	UINT8*											aabbBufferStart = nullptr;
 
 	ID3D12Resource*									viewCB = nullptr;
 	ViewCB											viewCBData;
@@ -348,7 +347,7 @@ struct Instance
 	DirectX::XMFLOAT3 scale;
 	DirectX::XMFLOAT4 rotation;
 	FLOAT transform3x4[3][4];
-	UINT InstanceID;
+	UINT InstanceID : 24;
 	UINT hitGroupIndex;
 };
 

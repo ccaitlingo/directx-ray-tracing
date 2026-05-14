@@ -137,16 +137,16 @@ public:
 		d3d.vsync = config.vsync;
 
 		// Load plane model
-		plane.object = Utils::LoadModel("./models/plane.obj", materials);
+		plane = Utils::LoadModel("./models/plane.obj", materials);
 		world_objs.push_back(&plane);
 
 		// Load a model
-		model.object = Utils::LoadModel("./models/sphere.obj", materials);
+		model = Utils::LoadModel("./models/sphere.obj", materials);
 		world_objs.push_back(&model);
 
 		// Create a sphere
-		sphere.object = Utils::CreateSphere(1.0f, "colors.mtl", materials);
-		world_objs.push_back(&sphere);
+		// sphere = Utils::CreateSphere(1.0f, "colors.mtl", materials);
+		// world_objs.push_back(&sphere);
 
 		// Ground plane
 		Utils::CreateInstance(plane, 
@@ -156,7 +156,7 @@ public:
 			0, TRIANGLE);
 
 		// Create the scene
-		BuildRandomScene(world_objs, sphere);
+		// BuildRandomScene(world_objs, model);
 
 		// // Create Instance 0 of sphere (ground)
 		// Utils::CreateInstance(
@@ -230,7 +230,10 @@ public:
 		D3DResources::Create_BackBuffer_RTV(d3d, resources);
 		D3DResources::Create_Vertex_Buffer(d3d, resources, world_objs);
 		D3DResources::Create_Index_Buffer(d3d, resources, world_objs);
+		D3DResources::Create_Plane_Vertex_Buffer(d3d, resources, world_objs);
+		D3DResources::Create_Plane_Index_Buffer(d3d, resources, world_objs);
 		D3DResources::Create_AABB_Buffer(d3d, resources);
+		// TODO: add here
 		//D3DResources::Create_Texture(d3d, resources, materials[0]); // TODO: support multiple models/instances
 		D3DResources::Create_View_CB(d3d, resources);
 		D3DResources::Create_Material_Buffer(d3d, resources, materials);
@@ -283,8 +286,8 @@ public:
 	
 private:
 	HWND window;
-	WorldObject model;
 	WorldObject plane;
+	WorldObject model;
 	WorldObject sphere;
 	std::vector<Material> materials;
 	std::vector<WorldObject*> world_objs;

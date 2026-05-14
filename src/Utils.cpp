@@ -183,11 +183,12 @@ vector<char> ReadFile(const string &filename)
 }
 
 //--------------------------------------------------------------------------------------
-// Scene Object Loading (Model & Sphere)
+// Scene Object Loading (Model, Sphere, Instance)
 //--------------------------------------------------------------------------------------
 
-Model LoadModel(string filepath, std::vector<Material> &material_list) 
+WorldObject LoadModel(string filepath, std::vector<Material> &material_list) 
 {
+	WorldObject wo = {};
 	Model model = {};
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -254,11 +255,14 @@ Model LoadModel(string filepath, std::vector<Material> &material_list)
 			model.indices.push_back(uniqueVertices[vertex]);
 		}
 	}
-	return model;
+
+	wo.object = model;
+	return wo;
 }
 
-Sphere CreateSphere(float radius, string filepath, std::vector<Material> &material_list) 
+WorldObject CreateSphere(float radius, string filepath, std::vector<Material> &material_list) 
 {
+	WorldObject wo;
 	Sphere sphere;
 	std::vector<tinyobj::material_t> materials;
 	std::map<std::string, int> matMap;
@@ -291,17 +295,16 @@ Sphere CreateSphere(float radius, string filepath, std::vector<Material> &materi
 
 	// Load the radius
 	sphere.radius = radius;
-	return sphere;
+
+	wo.object = sphere;
+	return wo;
 }
 
 void CreateInstance(WorldObject& object, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex)
 {
 	Instance new_instance = {pos, scale, rot, {}, id, hitGroupIndex};
-	
-	// Calculate the transform from position, scale, rotation
-	CalculateTransformMatrix(new_instance);
 
-	// Add to instance list
+	CalculateTransformMatrix(new_instance);
 	object.instances.push_back(new_instance);
 }
 
@@ -320,10 +323,11 @@ void CalculateTransformMatrix(Instance &instance)
 /**
 * TODO: Write a more efficient way to gather this information.
 */
-std::tuple<UINT, UINT, UINT> world_obj_iterator(const std::vector<WorldObject*>& world_objects)
+std::tuple<UINT, UINT, UINT, UINT> world_obj_iterator(const std::vector<WorldObject*>& world_objects)
 {
     UINT vertexCount = 0;
     UINT indexCount  = 0;
+	UINT modelCount = 0;
 	UINT instanceCount = 0;
 
     for (WorldObject* obj : world_objects)
@@ -333,11 +337,12 @@ std::tuple<UINT, UINT, UINT> world_obj_iterator(const std::vector<WorldObject*>&
             const Model& model = std::get<Model>(obj->object);
             vertexCount += model.vertices.size();
             indexCount  += model.indices.size();
+			modelCount++;
         }
 		instanceCount += obj->instances.size();
     }
 
-    return { vertexCount, indexCount, instanceCount };
+    return { vertexCount, indexCount, modelCount, instanceCount };
 }
 
 UINT vertexCount(const std::vector<WorldObject*>& world_objects)
@@ -350,9 +355,14 @@ UINT indexCount(const std::vector<WorldObject*>& world_objects)
 	return std::get<1>(world_obj_iterator(world_objects));
 }
 
-UINT instanceCount(const std::vector<WorldObject*>& world_objects)
+UINT modelCount(const std::vector<WorldObject*>& world_objects)
 {
 	return std::get<2>(world_obj_iterator(world_objects));
+}
+
+UINT instanceCount(const std::vector<WorldObject*>& world_objects)
+{
+	return std::get<3>(world_obj_iterator(world_objects));
 }
 
 //--------------------------------------------------------------------------------------

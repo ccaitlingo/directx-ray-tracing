@@ -22,7 +22,7 @@ void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
 	float3 barycentrics = float3((1.0f - attrib.uv.x - attrib.uv.y), attrib.uv.x, attrib.uv.y);
 
 	// Get the base color from the texture
-	VertexAttributes vertex = GetVertexAttributes(triangleIndex, barycentrics, instanceID);
+	VertexAttributes vertex = GetVertexAttributes(triangleIndex, barycentrics);
 	int2 coord = floor(vertex.uv * material.textureResolution.x);
 	// float3 color = albedo.Load(int3(coord, 0)).rgb;
 
@@ -38,13 +38,15 @@ void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 
 	// Prepare to calculate normal
-	VertexAttributes v0 = GetVertexAttributes(triangleIndex, float3(1,0,0), instanceID);
-	VertexAttributes v1 = GetVertexAttributes(triangleIndex, float3(0,1,0), instanceID);
-	VertexAttributes v2 = GetVertexAttributes(triangleIndex, float3(0,0,1), instanceID);
+	// VertexAttributes v0 = GetVertexAttributes(triangleIndex, float3(1,0,0));
+	// VertexAttributes v1 = GetVertexAttributes(triangleIndex, float3(0,1,0));
+	// VertexAttributes v2 = GetVertexAttributes(triangleIndex, float3(0,0,1));
 
     // Create orthonormal basis
     float3 T, B;
-    float3 N = normalize(barycentrics.x * v0.normal + barycentrics.y * v1.normal + barycentrics.z * v2.normal);
+    // float3 N = normalize(barycentrics.x * v0.normal + barycentrics.y * v1.normal + barycentrics.z * v2.normal);
+    float3x3 objectToWorld = (float3x3)ObjectToWorld3x4();
+    float3 N = normalize(mul(vertex.normal, objectToWorld));
     CreateCoordinateSystem(N, T, B);
 
     // ***** REFLECT or DIFFUSE *****

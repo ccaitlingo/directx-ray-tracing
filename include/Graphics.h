@@ -52,6 +52,8 @@ namespace D3DResources
 	void Create_Textures(D3D12Global &d3d, D3D12Resources &resources, const std::vector<Material> &materials);
 	void Create_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject*> &world_objs);
 	void Create_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject*> &world_objs);
+	void Create_Plane_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject*> &world_objs);
+	void Create_Plane_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject*> &world_objs);
 	void Create_AABB_Buffer(D3D12Global &d3d, D3D12Resources &resources);
 	void Create_Constant_Buffer(D3D12Global &d3d, ID3D12Resource** buffer, UINT64 size);
 	void Create_BackBuffer_RTV(D3D12Global &d3d, D3D12Resources &resources);
@@ -99,6 +101,7 @@ namespace D3D12
 namespace DXR
 {	
 	void Create_Bottom_Level_AS(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject*> &world_objs);
+	void Create_Bottom_Level_AS_Plane(D3D12Global &d3d, D3D12Resources &resources, WorldObject &world_objs, Model &model);
 	void Create_Bottom_Level_AS_Model(D3D12Global &d3d, D3D12Resources &resources, WorldObject &world_objs, Model &model);
 	void Create_Bottom_Level_AS_Sphere(D3D12Global &d3d, D3D12Resources &resources, WorldObject &world_objs, Sphere &sphere);
 	void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resources, std::vector<WorldObject*> &world_objs);

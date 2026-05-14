@@ -35,19 +35,21 @@ namespace Utils
 
 	std::vector<char> ReadFile(const std::string &filename);
 
-	Model LoadModel(std::string filepath, std::vector<Material> &material_list);
+	WorldObject LoadModel(std::string filepath, std::vector<Material> &material_list);
 
-	Sphere CreateSphere(float radius, std::string filepath, std::vector<Material> &material);
+	WorldObject CreateSphere(float radius, std::string filepath, std::vector<Material> &material);
 
 	void CreateInstance(WorldObject &object, DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT4 rot, UINT id, UINT hitGroupIndex);
 
 	void CalculateTransformMatrix(Instance &instance);
 
-	std::tuple<UINT, UINT, UINT> world_obj_iterator(const std::vector<WorldObject*>& world_objects);
+	std::tuple<UINT, UINT, UINT, UINT> world_obj_iterator(const std::vector<WorldObject*>& world_objects);
 
 	UINT vertexCount(const std::vector<WorldObject*>& world_objects);
 
 	UINT indexCount(const std::vector<WorldObject*>& world_objects);
+
+	UINT modelCount(const std::vector<WorldObject*>& world_objects);
 
 	UINT instanceCount(const std::vector<WorldObject*>& world_objects);
 
