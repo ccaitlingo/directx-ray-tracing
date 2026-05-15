@@ -156,7 +156,7 @@ public:
 			0, TRIANGLE);
 
 		// Create the scene
-		// BuildRandomScene(world_objs, model);
+		BuildRandomScene(world_objs, model);
 
 		// // Create Instance 0 of sphere (ground)
 		// Utils::CreateInstance(
@@ -233,7 +233,6 @@ public:
 		D3DResources::Create_Plane_Vertex_Buffer(d3d, resources, world_objs);
 		D3DResources::Create_Plane_Index_Buffer(d3d, resources, world_objs);
 		D3DResources::Create_AABB_Buffer(d3d, resources);
-		// TODO: add here
 		//D3DResources::Create_Texture(d3d, resources, materials[0]); // TODO: support multiple models/instances
 		D3DResources::Create_View_CB(d3d, resources);
 		D3DResources::Create_Material_Buffer(d3d, resources, materials);

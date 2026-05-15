@@ -109,7 +109,7 @@ VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics)
 {
     uint instanceID = InstanceID();
     
-    if (instanceID == 0)
+    if (instanceID > 0)
     {
         uint3 indices = GetIndices(triangleIndex);
         

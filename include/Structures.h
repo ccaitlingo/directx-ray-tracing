@@ -328,6 +328,13 @@ struct Vertex
 	}
 };
 
+inline const Vertex ZeroVertex =
+{
+    DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+    DirectX::XMFLOAT2(0.0f, 0.0f),
+    DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f)
+};
+
 struct Model
 {
 	UINT vertexOffset;

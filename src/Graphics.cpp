@@ -206,6 +206,11 @@ void Create_Plane_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, std
 		resources.planeVertexBufferView.StrideInBytes = sizeof(Vertex);
 		resources.planeVertexBufferView.SizeInBytes = static_cast<UINT>(info.size);
 	}
+	else
+	{
+		MessageBox(NULL, L"Plane is not the first element in world_objs like expected!", L"Error", MB_OK);
+		PostQuitMessage(EXIT_FAILURE);
+	}
 }
 
 /**
@@ -239,6 +244,11 @@ void Create_Plane_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, std:
 		resources.planeIndexBufferView.SizeInBytes = static_cast<UINT>(info.size);
 		resources.planeIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	}
+	else
+	{
+		MessageBox(NULL, L"Plane is not the first element in world_objs like expected!", L"Error", MB_OK);
+		PostQuitMessage(EXIT_FAILURE);
+	}
 }
 
 /*
@@ -246,41 +256,48 @@ void Create_Plane_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, std:
 */
 void Create_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject*> &world_objs) 
 {
-
 	// NOTE: Although this takes in a world object list,
 	// this function is NOT implemented to support multiple
 	// model vertices in one buffer
 
-	// Takes the first model in world_objs
-	for (auto* wo : world_objs)
+	// If no model, vertex buffer = 0
+	const Vertex* vertexData = &ZeroVertex;
+	UINT vertexCount = 1;
+
+	// Use the first model in world_objs
+	WorldObject* wo = world_objs[1];
+	if (auto* model = std::get_if<Model>(&wo->object))
 	{
-		if (auto* model = std::get_if<Model>(&wo->object)) // if model
-		{
-			// Create the vertex buffer resource
-			D3D12BufferCreateInfo info(((UINT)model->vertices.size() * sizeof(Vertex)), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-			Create_Buffer(d3d, info, &resources.vertexBuffer);
-		#if NAME_D3D_RESOURCES
-			resources.vertexBuffer->SetName(L"Vertex Buffer");
-		#endif
-
-			// Copy the vertex data to the vertex buffer
-			UINT8* pVertexDataBegin;
-			D3D12_RANGE readRange = {};
-			HRESULT hr = resources.vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
-			Utils::Validate(hr, L"Error: failed to map vertex buffer!");
-			
-			memcpy(pVertexDataBegin, model->vertices.data(), info.size);
-			resources.vertexBuffer->Unmap(0, nullptr);
-
-			// Initialize the vertex buffer view
-			resources.vertexBufferView.BufferLocation = resources.vertexBuffer->GetGPUVirtualAddress();
-			resources.vertexBufferView.StrideInBytes = sizeof(Vertex);
-			resources.vertexBufferView.SizeInBytes = static_cast<UINT>(info.size);
-
-			break;
-		}
+		vertexData = model->vertices.data();
+		vertexCount = static_cast<UINT>(model->vertices.size());
 	}
-	// If no model, no vertex buffer is created
+	else
+	{
+		MessageBox(NULL, L"No model!", L"Error", MB_OK);
+		PostQuitMessage(EXIT_FAILURE);
+	}
+	
+	// Create the vertex buffer resource
+	D3D12BufferCreateInfo info((vertexCount * sizeof(Vertex)), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+	Create_Buffer(d3d, info, &resources.vertexBuffer);
+#if NAME_D3D_RESOURCES
+	resources.vertexBuffer->SetName(L"Vertex Buffer");
+#endif
+
+	// Copy the vertex data to the vertex buffer
+	UINT8* pVertexDataBegin;
+	D3D12_RANGE readRange = {};
+	HRESULT hr = resources.vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
+	Utils::Validate(hr, L"Error: failed to map vertex buffer!");
+	
+	memcpy(pVertexDataBegin, vertexData, info.size);
+	resources.vertexBuffer->Unmap(0, nullptr);
+
+	// Initialize the vertex buffer view
+	resources.vertexBufferView.BufferLocation = resources.vertexBuffer->GetGPUVirtualAddress();
+	resources.vertexBufferView.StrideInBytes = sizeof(Vertex);
+	resources.vertexBufferView.SizeInBytes = static_cast<UINT>(info.size);
+
 }
 
 /**
@@ -292,34 +309,44 @@ void Create_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vecto
 	// this function is NOT implemented to support multiple
 	// model indices in one buffer
 
-	// Takes the first model in world_objs
-	for (auto* wo : world_objs)
+	// If no model, index buffer = 0
+	const UINT ZeroIndex = 0;
+	const UINT* indexData = &ZeroIndex;
+	UINT indexCount = 1;
+
+	// Use the first model in world_objs
+	WorldObject* plane = world_objs[1];
+	if (auto* model = std::get_if<Model>(&plane->object))
 	{
-		if (auto* model = std::get_if<Model>(&wo->object)) // if model
-		{
-			// Create the index buffer resource
-			D3D12BufferCreateInfo info((UINT)model->indices.size() * sizeof(UINT), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-			Create_Buffer(d3d, info, &resources.indexBuffer);
-		#if NAME_D3D_RESOURCES
-			resources.indexBuffer->SetName(L"Index Buffer");
-		#endif
-
-			// Copy the index data to the index buffer
-			UINT8* pIndexDataBegin;
-			D3D12_RANGE readRange = {};
-			HRESULT hr = resources.indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin));
-			Utils::Validate(hr, L"Error: failed to map index buffer!");
-
-			memcpy(pIndexDataBegin, model->indices.data(), info.size);
-			resources.indexBuffer->Unmap(0, nullptr);
-
-			// Initialize the index buffer view
-			resources.indexBufferView.BufferLocation = resources.indexBuffer->GetGPUVirtualAddress();
-			resources.indexBufferView.SizeInBytes = static_cast<UINT>(info.size);
-			resources.indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-		}
+		indexData = model->indices.data();
+		indexCount = static_cast<UINT>(model->indices.size());
 	}
-	// If no model, no index buffer is created
+	else
+	{
+		MessageBox(NULL, L"No model!", L"Error", MB_OK);
+		PostQuitMessage(EXIT_FAILURE);
+	}
+
+	// Create the index buffer resource
+	D3D12BufferCreateInfo info(indexCount * sizeof(UINT), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+	Create_Buffer(d3d, info, &resources.indexBuffer);
+#if NAME_D3D_RESOURCES
+	resources.indexBuffer->SetName(L"Index Buffer");
+#endif
+
+	// Copy the index data to the index buffer
+	UINT8* pIndexDataBegin;
+	D3D12_RANGE readRange = {};
+	HRESULT hr = resources.indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin));
+	Utils::Validate(hr, L"Error: failed to map index buffer!");
+
+	memcpy(pIndexDataBegin, indexData, info.size);
+	resources.indexBuffer->Unmap(0, nullptr);
+
+	// Initialize the index buffer view
+	resources.indexBufferView.BufferLocation = resources.indexBuffer->GetGPUVirtualAddress();
+	resources.indexBufferView.SizeInBytes = static_cast<UINT>(info.size);
+	resources.indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 }
 
 /**
@@ -1663,6 +1690,26 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 	// 1 SRV for the plane vertex buffer
 	// 1 SRV for the texture
 	// 1 SRV for the materials
+
+	// Get plane (assume to be the first element in world objects)
+	WorldObject* plane = world_objs[0];
+	UINT planeIndexCount, planeVertexCount = 0;
+	if (auto* model = std::get_if<Model>(&plane->object))
+	{
+		planeIndexCount = model->indices.size();
+		planeVertexCount = model->vertices.size();
+	}
+
+	// Get model
+	WorldObject* wo = world_objs[1];
+	UINT indexCount, vertexCount = 1;
+	if (auto* model = std::get_if<Model>(&wo->object))
+	{
+		indexCount = model->indices.size();
+		vertexCount = model->vertices.size();
+	}
+
+	// Prepare description
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 	desc.NumDescriptors = 9;
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
@@ -1710,7 +1757,7 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 	indexSRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 	indexSRVDesc.Buffer.StructureByteStride = 0;
 	indexSRVDesc.Buffer.FirstElement = 0;
-	indexSRVDesc.Buffer.NumElements = (static_cast<UINT>(Utils::indexCount(world_objs) * sizeof(UINT))) / sizeof(float);
+	indexSRVDesc.Buffer.NumElements = (static_cast<UINT>(indexCount * sizeof(UINT))) / sizeof(float);
 	indexSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 	handle.ptr += handleIncrement;
@@ -1723,7 +1770,7 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 	vertexSRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 	vertexSRVDesc.Buffer.StructureByteStride = 0;
 	vertexSRVDesc.Buffer.FirstElement = 0;
-	vertexSRVDesc.Buffer.NumElements = (static_cast<UINT>(Utils::vertexCount(world_objs) * sizeof(Vertex))) / sizeof(float);
+	vertexSRVDesc.Buffer.NumElements = (static_cast<UINT>(vertexCount * sizeof(Vertex))) / sizeof(float);
 	vertexSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 	handle.ptr += handleIncrement;
@@ -1736,7 +1783,7 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 	planeIndexSRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 	planeIndexSRVDesc.Buffer.StructureByteStride = 0;
 	planeIndexSRVDesc.Buffer.FirstElement = 0;
-	planeIndexSRVDesc.Buffer.NumElements = (6 * sizeof(UINT)) / sizeof(float);
+	planeIndexSRVDesc.Buffer.NumElements = (static_cast<UINT>(planeIndexCount * sizeof(UINT))) / sizeof(float);
 	planeIndexSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 	handle.ptr += handleIncrement;
@@ -1749,7 +1796,7 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 	planeVertexSRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 	planeVertexSRVDesc.Buffer.StructureByteStride = 0;
 	planeVertexSRVDesc.Buffer.FirstElement = 0;
-	planeVertexSRVDesc.Buffer.NumElements = (4 * sizeof(Vertex)) / sizeof(float);
+	planeVertexSRVDesc.Buffer.NumElements = (static_cast<UINT>(planeVertexCount * sizeof(Vertex))) / sizeof(float);
 	planeVertexSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 	handle.ptr += handleIncrement;
