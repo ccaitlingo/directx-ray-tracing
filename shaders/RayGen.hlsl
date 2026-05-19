@@ -31,17 +31,6 @@ void RayGen()
         int depth = 0;
 
         // Initialize the payload
-        // HitInfo payload;
-        // payload.ShadedColor = float3(0.f, 0.f, 0.f);
-        // payload.HitT = 0.f;
-        // payload.throughput = float3(1.0f, 1.0f, 1.0f);
-        // payload.HitNormal = float3(0.f, 0.f, 0.f);
-        // payload.nextPos = float3(0.f, 0.f, 0.f);
-        // payload.nextDir = float3(0.f, 0.f, 0.f);
-        // payload.random = float2(0.f, 0.f);
-        // payload.illum = 0.f;
-
-        // Initialize the payload
         HitInfo payload = {
             float3(0.f, 0.f, 0.f), // ShadedColor
             float3(1.f, 1.f, 1.f), // throughput

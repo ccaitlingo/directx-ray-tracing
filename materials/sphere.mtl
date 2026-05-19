@@ -15,19 +15,19 @@ newmtl purple
     Ka 0.0 0.0 0.0
     Kd 0.7187 0.5039 0.7070
     d 1
-    Ns 50
+    Ns 90
     illum 0
 newmtl grey
     Ka 0.0 0.0 0.0
     Kd 0.7539 0.6445 0.6602
     d 1
-    Ns 0
+    Ns 80
     illum 0
 newmtl metal
     Ka 0.0 0.0 0.0
     Kd 0.95 0.95 0.95
     d 1
-    Ns 90
+    Ns 100
     illum 0
 newmtl light
     Ka 0.0 0.0 0.0

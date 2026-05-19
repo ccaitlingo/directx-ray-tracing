@@ -12,10 +12,9 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
 
     // Material
     float3 baseColor    = material.diffuse.rgb;
-    float3 ambientTerm  = material.ambient.rgb;
     float shininess     = material.shininess;
     float illum         = material.illum.x;
-    float3 color = baseColor;
+    float3 color        = baseColor;
 
     // Early termination when a ray hits a light source
     if (illum > 0)
@@ -52,7 +51,7 @@ void ClosestHitSphere(inout HitInfo payload, SphereAttributes attrib)
 
         // Fresnel (Schlick Approximation)
         float cosTheta = saturate(dot(-incidentDir, N));
-        float3 F0 = baseColor;
+        float3 F0 = color;
         float3 F = F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
 
         payload.nextDir = nextDir;

@@ -13,20 +13,11 @@ void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
 
 	// Material
 	float3 baseColor    = material.diffuse.rgb;
-    float3 ambientTerm  = material.ambient.rgb;
     float shininess     = material.shininess;
 	float illum         = material.illum.x;
-	float3 color = baseColor;
+	float3 color        = baseColor;
 
-	// Calculate the triangle barycentric coordinates
-	float3 barycentrics = float3((1.0f - attrib.uv.x - attrib.uv.y), attrib.uv.x, attrib.uv.y);
-
-	// Get the base color from the texture
-	VertexAttributes vertex = GetVertexAttributes(triangleIndex, barycentrics);
-	int2 coord = floor(vertex.uv * material.textureResolution.x);
-	// float3 color = albedo.Load(int3(coord, 0)).rgb;
-
-	// Early termination when a ray hits a light source
+    // Early termination when a ray hits a light source
     if (illum > 0)
     {
         payload.ShadedColor = color * illum;
@@ -34,19 +25,21 @@ void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
         return;
     }
 
+	// Calculate the triangle barycentric coordinates
+	float3 barycentrics = float3((1.0f - attrib.uv.x - attrib.uv.y), attrib.uv.x, attrib.uv.y);
+
+	// Get the base color from the texture
+	VertexAttributes vertex = GetVertexAttributes(triangleIndex, barycentrics);
+	int2 coord = floor(vertex.uv * material.textureResolution.x);
+
 	// Calculate hit position from ray origin + direction * t
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 
-	// Prepare to calculate normal
-	// VertexAttributes v0 = GetVertexAttributes(triangleIndex, float3(1,0,0));
-	// VertexAttributes v1 = GetVertexAttributes(triangleIndex, float3(0,1,0));
-	// VertexAttributes v2 = GetVertexAttributes(triangleIndex, float3(0,0,1));
-
-    // Create orthonormal basis
+    // Build orthonormal basis
     float3 T, B;
-    // float3 N = normalize(barycentrics.x * v0.normal + barycentrics.y * v1.normal + barycentrics.z * v2.normal);
+    float3 objectNormal = normalize(vertex.normal);
     float3x3 objectToWorld = (float3x3)ObjectToWorld3x4();
-    float3 N = normalize(mul(vertex.normal, objectToWorld));
+    float3 N = normalize(mul(objectNormal, objectToWorld));
     CreateCoordinateSystem(N, T, B);
 
     // ***** REFLECT or DIFFUSE *****

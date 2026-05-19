@@ -32,5 +32,5 @@ newmtl light
     Ka 0.0 0.0 0.0
     Kd 0.95 0.95 0.70
     d 1
-    Ns 80
+    Ns 0
     illum 1

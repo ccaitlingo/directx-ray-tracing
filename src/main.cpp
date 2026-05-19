@@ -72,11 +72,11 @@ public:
 		{
 			scale = 0.25f;
 			smallRadius = 0.2f * scale;
-			smallHeight = -0.07f * scale;
+			smallHeight = -0.0f * scale;
 			bigRadius = 1.0f * scale;
 			bigHeight = 0.0f * scale;
 			bigDistance = 7.3f * scale;
-			spread = 2.5f * scale;
+			spread = 3.8f * scale;
 			nudge = -0.8f * scale;
 			collisionDist = 2.0f * scale;
 			gridMax = 11;
@@ -205,7 +205,7 @@ public:
 		// // Create Instance 4 of sphere (small left)
 		// Utils::CreateInstance(
 		// 	sphere,
-		// 	DirectX::XMFLOAT3(1.25f, -0.65f, 0.0f),
+		// 	DirectX::XMFLOAT3(1.5f, -0.65f, 0.0f),
 		// 	DirectX::XMFLOAT3(0.35f, 0.35f, 0.35f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	4,
@@ -214,7 +214,7 @@ public:
 		// // Create Instance 5 of sphere (small right)
 		// Utils::CreateInstance(
 		// 	sphere,
-		// 	DirectX::XMFLOAT3(-1.2f, -0.75f, 0.0f),
+		// 	DirectX::XMFLOAT3(-1.2f, -0.75f, 1.0f),
 		// 	DirectX::XMFLOAT3(0.25f, 0.25f, 0.25f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	5,
