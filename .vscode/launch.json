@@ -5,7 +5,7 @@
             "name": "Launch DXR (MSVC)",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/IntroToDXR_v6.exe",
+            "program": "${workspaceFolder}/bin/IntroToDXR_v8.exe",
             "args": [
                 "-width", "1920",
                 "-height", "1080",

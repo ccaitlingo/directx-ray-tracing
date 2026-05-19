@@ -10,7 +10,7 @@
                     "/m",
                     "/p:Configuration=Release",
                     "/p:Platform=x64",
-                    "/p:VersionTag=v6"
+                    "/p:VersionTag=v8"
                 ]
             },
             "group": {

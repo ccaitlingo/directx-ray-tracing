@@ -145,12 +145,12 @@ public:
 		world_objs.push_back(&plane);
 
 		// Create a sphere
-		sphere = Utils::CreateSphere(1.0f, "colors.mtl", materials);
-		world_objs.push_back(&sphere);
+		// sphere = Utils::CreateSphere(1.0f, "colors.mtl", materials);
+		// world_objs.push_back(&sphere);
 
 		// Load a model
-		// model = Utils::LoadModel("./models/sphere.obj", materials);
-		// world_objs.push_back(&model);
+		model = Utils::LoadModel("./models/sphere.obj", materials);
+		world_objs.push_back(&model);
 
 		// Ground plane
 		Utils::CreateInstance(plane, 
@@ -160,7 +160,7 @@ public:
 			0, TRIANGLE);
 
 		// Create the scene
-		BuildRandomScene(world_objs, sphere);
+		BuildRandomScene(world_objs, model);
 
 		// ===============================================================
 		//  *\( ^ - ^ )/*  <enjoy!>
