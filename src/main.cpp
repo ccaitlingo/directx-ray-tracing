@@ -55,31 +55,31 @@ public:
 
 		bool isModel = std::holds_alternative<Model>(world_object.object);
 		uint32_t hitgroup = isModel ? TRIANGLE : AABB;
-		uint32_t instanceID = world_objs.size();
+		uint32_t instanceID = 2;
 
 		float scale = 1.0f;
 		float smallRadius = 0.2f * scale;
-		float smallHeight = -0.8f * scale;
+		float smallHeight = smallRadius;
 		float bigRadius = 1.0f * scale;
-		float bigHeight = 0.0f * scale;
+		float bigHeight = bigRadius;
 		float bigDistance = 2.5f * scale;
 		float spread = 1.0f * scale;
 		float nudge = -0.8f * scale;
 		float collisionDist = 1.2f * scale;
-		float gridMax = 11 * scale;
+		float gridMax = 11;
 
 		if (isModel)
 		{
-			scale = 1.0f;
+			scale = 0.25f;
 			smallRadius = 0.2f * scale;
-			smallHeight = -1.0f * scale;
+			smallHeight = -0.07f * scale;
 			bigRadius = 1.0f * scale;
-			bigHeight = -1.2f * scale;
-			bigDistance = 7.2f * scale;
+			bigHeight = 0.0f * scale;
+			bigDistance = 7.3f * scale;
 			spread = 2.5f * scale;
 			nudge = -0.8f * scale;
 			collisionDist = 2.0f * scale;
-			gridMax = 11 * scale;
+			gridMax = 11;
 		}
 
 		// A bunch of random small instances
@@ -136,27 +136,35 @@ public:
 		d3d.height = config.height;
 		d3d.vsync = config.vsync;
 
+		// ===============================================================
+		// DEVELOPER PLAYGROUND
+		// ===============================================================
+
 		// Load plane model
 		plane = Utils::LoadModel("./models/plane.obj", materials);
 		world_objs.push_back(&plane);
 
-		// Load a model
-		model = Utils::LoadModel("./models/sphere.obj", materials);
-		world_objs.push_back(&model);
-
 		// Create a sphere
-		// sphere = Utils::CreateSphere(1.0f, "colors.mtl", materials);
-		// world_objs.push_back(&sphere);
+		sphere = Utils::CreateSphere(1.0f, "colors.mtl", materials);
+		world_objs.push_back(&sphere);
+
+		// Load a model
+		// model = Utils::LoadModel("./models/sphere.obj", materials);
+		// world_objs.push_back(&model);
 
 		// Ground plane
 		Utils::CreateInstance(plane, 
-			DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f),
+			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
 			DirectX::XMFLOAT3(5.0f, 5.0f, 5.0f),
 			DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 			0, TRIANGLE);
 
 		// Create the scene
-		BuildRandomScene(world_objs, model);
+		BuildRandomScene(world_objs, sphere);
+
+		// ===============================================================
+		//  *\( ^ - ^ )/*  <enjoy!>
+		// ===============================================================
 
 		// // Create Instance 0 of sphere (ground)
 		// Utils::CreateInstance(
@@ -165,7 +173,7 @@ public:
 		// 	DirectX::XMFLOAT3(80.0f, 80.0f, 80.0f), // scale
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), // rotation
 		// 	0, // id
-		// 	0 // hitGroup
+		// 	AABB // hitGroup
 		// );
 		// // Create Instance 1 of sphere (center)
 		// Utils::CreateInstance(
@@ -174,7 +182,7 @@ public:
 		// 	DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	1,
-		// 	1
+		// 	AABB
 		// );
 		// // Create Instance 2 of sphere (right)
 		// Utils::CreateInstance(
@@ -183,7 +191,7 @@ public:
 		// 	DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	2,
-		// 	1
+		// 	AABB
 		// );
 		// // Create Instance 3 of sphere (left)
 		// Utils::CreateInstance(
@@ -192,7 +200,7 @@ public:
 		// 	DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	3,
-		// 	1
+		// 	AABB
 		// );
 		// // Create Instance 4 of sphere (small left)
 		// Utils::CreateInstance(
@@ -201,7 +209,7 @@ public:
 		// 	DirectX::XMFLOAT3(0.35f, 0.35f, 0.35f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	4,
-		// 	1
+		// 	AABB
 		// );
 		// // Create Instance 5 of sphere (small right)
 		// Utils::CreateInstance(
@@ -210,7 +218,7 @@ public:
 		// 	DirectX::XMFLOAT3(0.25f, 0.25f, 0.25f),
 		// 	DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
 		// 	5,
-		// 	1
+		// 	AABB
 		// );
 
 		// Initialize the shader compiler
@@ -228,6 +236,7 @@ public:
 		// Create common resources
 		D3DResources::Create_Descriptor_Heaps(d3d, resources);
 		D3DResources::Create_BackBuffer_RTV(d3d, resources);
+		D3DResources::Plane_Check(world_objs); // Safety check
 		D3DResources::Create_Vertex_Buffer(d3d, resources, world_objs);
 		D3DResources::Create_Index_Buffer(d3d, resources, world_objs);
 		D3DResources::Create_Plane_Vertex_Buffer(d3d, resources, world_objs);

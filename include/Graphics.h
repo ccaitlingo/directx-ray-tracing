@@ -67,6 +67,8 @@ namespace D3DResources
 	void Upload_Texture(D3D12Global &d3d, ID3D12Resource* destResource, ID3D12Resource* srcResource, const TextureInfo &texture);
 
 	void Destroy(D3D12Resources &resources);
+
+	void Plane_Check(std::vector<WorldObject*> &world_objs);
 }
 
 namespace D3DShaders

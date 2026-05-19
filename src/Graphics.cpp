@@ -43,6 +43,29 @@ namespace D3DResources
 {
 
 /**
+ * Safety guard to ensure that the programmer has create a plane
+ * and put it at instance 0 in the world objects list. Several
+ * methods will fail without this -- only uncomment Plane_Check if
+ * you definitely know what you're doing.
+ */
+void Plane_Check(std::vector<WorldObject*> &world_objs)
+{
+	WorldObject* plane = world_objs[0];
+
+	if (!std::holds_alternative<Model>(plane->object))
+	{
+		MessageBox(NULL, L"Plane is not the first element in world_objs like expected!", L"Error", MB_OK);
+		PostQuitMessage(EXIT_FAILURE);
+	}
+
+	if (world_objs.size() > 2)
+	{
+		MessageBox(NULL, L"Only plane and one other object is currently supported.", L"Error", MB_OK);
+		PostQuitMessage(EXIT_FAILURE);
+	}
+}
+
+/**
 * Create a GPU buffer resource.
 */
 void Create_Buffer(D3D12Global &d3d, D3D12BufferCreateInfo& info, ID3D12Resource** ppResource)
@@ -174,15 +197,12 @@ void Upload_Texture(D3D12Global &d3d, ID3D12Resource* destResource, ID3D12Resour
 	d3d.cmdList->ResourceBarrier(1, &barrier);
 }
 
-
 /*
 * Create the plane vertex buffer.
 */
 void Create_Plane_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject*> &world_objs) 
 {
-	// Assume plane is the first element in world objects
 	WorldObject* plane = world_objs[0];
-
 	if (auto* model = std::get_if<Model>(&plane->object))
 	{
 		// Create the plane vertex buffer resource
@@ -206,11 +226,6 @@ void Create_Plane_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, std
 		resources.planeVertexBufferView.StrideInBytes = sizeof(Vertex);
 		resources.planeVertexBufferView.SizeInBytes = static_cast<UINT>(info.size);
 	}
-	else
-	{
-		MessageBox(NULL, L"Plane is not the first element in world_objs like expected!", L"Error", MB_OK);
-		PostQuitMessage(EXIT_FAILURE);
-	}
 }
 
 /**
@@ -218,9 +233,7 @@ void Create_Plane_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, std
 */
 void Create_Plane_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vector<WorldObject*> &world_objs) 
 {
-	// Assume plane is the first element in world objects
 	WorldObject* plane = world_objs[0];
-
 	if (auto* model = std::get_if<Model>(&plane->object))
 	{
 		// Create the plane index buffer resource
@@ -244,11 +257,6 @@ void Create_Plane_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, std:
 		resources.planeIndexBufferView.SizeInBytes = static_cast<UINT>(info.size);
 		resources.planeIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	}
-	else
-	{
-		MessageBox(NULL, L"Plane is not the first element in world_objs like expected!", L"Error", MB_OK);
-		PostQuitMessage(EXIT_FAILURE);
-	}
 }
 
 /*
@@ -270,11 +278,6 @@ void Create_Vertex_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vect
 	{
 		vertexData = model->vertices.data();
 		vertexCount = static_cast<UINT>(model->vertices.size());
-	}
-	else
-	{
-		MessageBox(NULL, L"No model!", L"Error", MB_OK);
-		PostQuitMessage(EXIT_FAILURE);
 	}
 	
 	// Create the vertex buffer resource
@@ -310,25 +313,20 @@ void Create_Index_Buffer(D3D12Global &d3d, D3D12Resources &resources, std::vecto
 	// model indices in one buffer
 
 	// If no model, index buffer = 0
-	const UINT ZeroIndex = 0;
+	UINT ZeroIndex = 0;
 	const UINT* indexData = &ZeroIndex;
 	UINT indexCount = 1;
 
 	// Use the first model in world_objs
-	WorldObject* plane = world_objs[1];
-	if (auto* model = std::get_if<Model>(&plane->object))
+	WorldObject* wo = world_objs[1];
+	if (auto* model = std::get_if<Model>(&wo->object))
 	{
 		indexData = model->indices.data();
 		indexCount = static_cast<UINT>(model->indices.size());
 	}
-	else
-	{
-		MessageBox(NULL, L"No model!", L"Error", MB_OK);
-		PostQuitMessage(EXIT_FAILURE);
-	}
 
 	// Create the index buffer resource
-	D3D12BufferCreateInfo info(indexCount * sizeof(UINT), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+	D3D12BufferCreateInfo info((indexCount * sizeof(UINT)), D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 	Create_Buffer(d3d, info, &resources.indexBuffer);
 #if NAME_D3D_RESOURCES
 	resources.indexBuffer->SetName(L"Index Buffer");
@@ -1210,9 +1208,8 @@ void Create_Top_Level_AS(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &resou
 {
 	// Describe the TLAS geometry instance(s)
 	UINT numObjects = 2; // NOTE: Only plane and one other object is currently supported
-	// UINT numObjects = static_cast<UINT>(world_objs.size());
-	UINT numInstances = Utils::instanceCount(world_objs);
-	UINT numObjInstances = 0;
+	UINT numInstances = Utils::instanceCount(world_objs); // Total instances
+	UINT numObjInstances = 0; // Instances per object
 	std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instanceDesc(numInstances);
 
 	// Loop through all instances
@@ -1692,8 +1689,8 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 	// 1 SRV for the materials
 
 	// Get plane (assume to be the first element in world objects)
+	UINT planeIndexCount = 0; UINT planeVertexCount = 0;
 	WorldObject* plane = world_objs[0];
-	UINT planeIndexCount, planeVertexCount = 0;
 	if (auto* model = std::get_if<Model>(&plane->object))
 	{
 		planeIndexCount = model->indices.size();
@@ -1701,8 +1698,8 @@ void Create_Descriptor_Heaps(D3D12Global &d3d, DXRGlobal &dxr, D3D12Resources &r
 	}
 
 	// Get model
+	UINT indexCount = 1; UINT vertexCount = 1;
 	WorldObject* wo = world_objs[1];
-	UINT indexCount, vertexCount = 1;
 	if (auto* model = std::get_if<Model>(&wo->object))
 	{
 		indexCount = model->indices.size();
