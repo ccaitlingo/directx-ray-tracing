@@ -35,53 +35,12 @@ void ClosestHit(inout HitInfo payload, TriangleAttributes attrib)
 	// Calculate hit position from ray origin + direction * t
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 
-    // Build orthonormal basis
-    // float3 T, B;
-    // float3 objectNormal = normalize(vertex.normal);
-    // float3x3 objectToWorld = (float3x3)ObjectToWorld3x4();
-    // float3 N = normalize(mul(objectToWorld, objectNormal));
-    // if (HitKind() == HIT_KIND_TRIANGLE_BACK_FACE) { N = -N; }
-    // CreateCoordinateSystem(N, T, B);
-
-    // --------------------------------------------------
-    // GEOMETRIC NORMAL TEST
-    // --------------------------------------------------
-
-    // Fetch triangle indices
-    uint3 triIndices = GetIndices(triangleIndex);
-
-    // Fetch all 3 vertex positions from the mesh
-    float3 p0, p1, p2;
-
-    {
-        int addr0 = (triIndices[0] * 8) * 4;
-        int addr1 = (triIndices[1] * 8) * 4;
-        int addr2 = (triIndices[2] * 8) * 4;
-
-        p0 = asfloat(vertices.Load3(addr0));
-        p1 = asfloat(vertices.Load3(addr1));
-        p2 = asfloat(vertices.Load3(addr2));
-    }
-
-    // Compute geometric normal in object space
-    float3 edge1 = p1 - p0;
-    float3 edge2 = p2 - p0;
-
-    float3 objectNormal = normalize(cross(edge1, edge2));
-
-    // Transform to world space
-    float3x3 objectToWorld = (float3x3)ObjectToWorld3x4();
-
-    float3 N = normalize(mul(objectToWorld, objectNormal));
-
-    // Handle backfaces
-    if (HitKind() == HIT_KIND_TRIANGLE_BACK_FACE)
-    {
-        N = -N;
-    }
-
-    // Build tangent basis
+    // Build orthnormal basis using geometric normal
     float3 T, B;
+    float3 objectNormal = GetTriangleGeometricNormal(triangleIndex);
+    float3x3 objectToWorld = (float3x3)ObjectToWorld3x4();
+    float3 N = normalize(mul(objectToWorld, objectNormal));
+    if (HitKind() == HIT_KIND_TRIANGLE_BACK_FACE) { N = -N; }
     CreateCoordinateSystem(N, T, B);
 
     // ***** REFLECT or DIFFUSE *****

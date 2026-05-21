@@ -167,6 +167,36 @@ VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics)
     }
 }
 
+float3 GetTriangleGeometricNormal(uint triangleIndex)
+{
+    uint instanceID = InstanceID();
+    uint3 idx = GetIndices(triangleIndex);
+
+    float3 p0, p1, p2;
+
+    int a0 = (idx.x * 8) * 4;
+    int a1 = (idx.y * 8) * 4;
+    int a2 = (idx.z * 8) * 4;
+
+    if (instanceID > 0)
+    {
+        p0 = asfloat(vertices.Load3(a0));
+        p1 = asfloat(vertices.Load3(a1));
+        p2 = asfloat(vertices.Load3(a2));
+    }
+    else
+    {
+        p0 = asfloat(planeVertices.Load3(a0));
+        p1 = asfloat(planeVertices.Load3(a1));
+        p2 = asfloat(planeVertices.Load3(a2));
+    }
+
+    float3 edge1 = p1 - p0;
+    float3 edge2 = p2 - p0;
+
+    return normalize(cross(edge1, edge2));
+}
+
 uint pcg_hash(uint input)
 {
     uint state = input * 747796405u + 2891336453u;

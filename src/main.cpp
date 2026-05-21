@@ -55,7 +55,7 @@ public:
 
 		bool isModel = std::holds_alternative<Model>(world_object.object);
 		uint32_t hitgroup = isModel ? TRIANGLE : AABB;
-		uint32_t instanceID = 2;
+		uint32_t instanceID = 1;
 
 		float scale = 1.0f;
 		float smallRadius = 0.2f * scale;
@@ -76,8 +76,8 @@ public:
 			bigRadius = 1.0f * scale;
 			bigHeight = 0.0f * scale;
 			bigDistance = 7.3f * scale;
-			spread = 3.8f * scale;
-			nudge = -0.8f * scale;
+			spread = 4.8f * scale;
+			nudge = -5.8f * scale;
 			collisionDist = 2.0f * scale;
 			gridMax = 11;
 		}
