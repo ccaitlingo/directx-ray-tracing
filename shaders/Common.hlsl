@@ -169,7 +169,11 @@ VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics)
 
 float3 GetTriangleGeometricNormal(uint triangleIndex)
 {
-    uint instanceID = InstanceID();
+    if (InstanceID() == 0)
+    {
+        return float3(0.0f, 0.1f, 0.0f); // Ground plane normals just point up
+    }
+
     uint3 idx = GetIndices(triangleIndex);
 
     float3 p0, p1, p2;
@@ -178,18 +182,9 @@ float3 GetTriangleGeometricNormal(uint triangleIndex)
     int a1 = (idx.y * 8) * 4;
     int a2 = (idx.z * 8) * 4;
 
-    if (instanceID > 0)
-    {
-        p0 = asfloat(vertices.Load3(a0));
-        p1 = asfloat(vertices.Load3(a1));
-        p2 = asfloat(vertices.Load3(a2));
-    }
-    else
-    {
-        p0 = asfloat(planeVertices.Load3(a0));
-        p1 = asfloat(planeVertices.Load3(a1));
-        p2 = asfloat(planeVertices.Load3(a2));
-    }
+    p0 = asfloat(vertices.Load3(a0));
+    p1 = asfloat(vertices.Load3(a1));
+    p2 = asfloat(vertices.Load3(a2));
 
     float3 edge1 = p1 - p0;
     float3 edge2 = p2 - p0;

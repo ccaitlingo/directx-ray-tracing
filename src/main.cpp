@@ -63,9 +63,9 @@ public:
 		float bigRadius = 1.0f * scale;
 		float bigHeight = bigRadius;
 		float bigDistance = 2.5f * scale;
-		float spread = 1.0f * scale;
-		float nudge = -0.8f * scale;
-		float collisionDist = 1.2f * scale;
+		float spread = 1.5f * scale;
+		float nudge = -1.8f * scale;
+		float collisionDist = 1.0f * scale;
 		float gridMax = 11;
 
 		if (isModel)
