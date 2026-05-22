@@ -95,7 +95,6 @@ struct VertexAttributes
 {
 	float3 position;
 	float2 uv;
-	float3 normal;
 };
 
 uint3 GetIndices(uint triangleIndex)
@@ -116,7 +115,6 @@ VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics)
         VertexAttributes v;
         v.position = float3(0, 0, 0);
         v.uv = float2(0, 0);
-        v.normal = float3(0, 0, 0);
 
         for (uint i = 0; i < 3; i++)
         {
@@ -129,12 +127,8 @@ VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics)
             // uv (float2)
             v.uv += asfloat(vertices.Load2(address)) * barycentrics[i];
             address += 2 * 4;
-
-            // normal (float3)
-            v.normal += asfloat(vertices.Load3(address)) * barycentrics[i];
         }
 
-        v.normal = normalize(v.normal);
         return v;
 
     } else {
@@ -144,7 +138,6 @@ VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics)
         VertexAttributes v;
         v.position = float3(0, 0, 0);
         v.uv = float2(0, 0);
-        v.normal = float3(0, 0, 0);
 
         for (uint i = 0; i < 3; i++)
         {
@@ -157,12 +150,8 @@ VertexAttributes GetVertexAttributes(uint triangleIndex, float3 barycentrics)
             // uv (float2)
             v.uv += asfloat(planeVertices.Load2(address)) * barycentrics[i];
             address += 2 * 4;
-
-            // normal (float3)
-            v.normal += asfloat(planeVertices.Load3(address)) * barycentrics[i];
         }
-
-        v.normal = normalize(v.normal);
+        
         return v;
     }
 }
