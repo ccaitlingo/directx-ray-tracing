@@ -10,6 +10,29 @@ This project aims to implement Ray Tracing in One Weekend using DirectX.
 
 * Two years later, I learn about the GPU and want learn about path tracing using DirectX (DXR), one of the most common APIs for developing ray tracing programs that run on the GPU. [Intro To DXR](https://github.com/acmarrs/IntroToDXR) is a startup framework for it. (Specifically, "A barebones application to get you jump started with DirectX Raytracing! Unlike other tutorials, this sample code _does not create or use any abstractions_ on top of the DXR Host API, and focuses on highlighting exactly what is new and different with DXR using the raw API call.")
 
+## *Analysis:* Triangle Intersection (Hardware) vs. Sphere Intersection (Software)
+
+### Nsight Graphics Profiling Trace Compare
+
+1st trace = Hardware Intersection, 2nd trace = Custom Intersection Shader (Software Intersection)
+
+### Triangle Intersection
+* Performed by the hardware (RT cores)
+* Memory heavy
+* Higher latency seen because of vertex/index memory reads from global memory
+
+![System memory](./traces/sysmem_bandwidth.png)
+![SM instruction latency](./traces/sm_instr_latency.png)
+
+### Sphere Intersection
+* Performed by custom intersection shader (`IntersectionSphere.hlsl`)
+* Compute heavy
+* Active SM
+
+![SM throughput](./traces/sm_throughput.png)
+
+To recreate, run [Nsight Graphics GPU Trace Profiler](https://archive.docs.nvidia.com/nsight-graphics/2023.1/UserGuide/index.html#gpu_trace_ui) on `bin/IntroToDXR_model.exe` and `bin/IntroToDXR_sphere.exe`.
+
 ## Requirements
 
 * Windows 10 v1809, "October 2018 Update" (RS5) or later
