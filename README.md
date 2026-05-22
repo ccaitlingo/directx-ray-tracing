@@ -10,7 +10,11 @@ This project aims to implement Ray Tracing in One Weekend using DirectX.
 
 * Two years later, I learn about the GPU and want learn about path tracing using DirectX (DXR), one of the most common APIs for developing ray tracing programs that run on the GPU. [Intro To DXR](https://github.com/acmarrs/IntroToDXR) is a startup framework for it. (Specifically, "A barebones application to get you jump started with DirectX Raytracing! Unlike other tutorials, this sample code _does not create or use any abstractions_ on top of the DXR Host API, and focuses on highlighting exactly what is new and different with DXR using the raw API call.")
 
+* This ray tracer demonstrates two intersection methods: built-in triangle intersection on NVIDIA hardware and custom sphere intersection by detecting AABB hits and then running shader code to calculate the intersection. Therefore, an intersection shader only exists for the sphere method. The closest hit shaders for both triangle and sphere methods implement diffuse, reflective, and emissive shading. **I implement the classic RTOW scene using both methods and compare them below.**
+
 ## *Analysis:* Triangle Intersection (Hardware) vs. Sphere Intersection (Software)
+
+![RTOW scene](./renders/AABB_scene.png)
 
 ### Nsight Graphics Profiling Trace Compare
 
